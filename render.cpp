@@ -9,7 +9,7 @@ void processInput(GLFWwindow* window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-bool isFullscreen = false;
+static bool isFullscreen = false;
 
 int main()
 {
@@ -34,6 +34,8 @@ int main()
         return -1;
     }
 
+    glfwSetWindowPos(window, 560, 240);
+
     //makes window context current
     //----------------------------
     glfwMakeContextCurrent(window);
@@ -49,6 +51,19 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    //rendering done here
+    //-------------------
+    float positions[6] = {
+        -0.5f, -0.5f,
+        0.0f, 0.5f,
+        0.5f, -0.5f
+    };
+
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
 
     // render loop
     // -----------
@@ -83,19 +98,6 @@ void processInput(GLFWwindow* window)
     //close window
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    //toggling between fullscreen and windowed modes
-    if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
-        if (isFullscreen) {
-            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 1280, 720, GLFW_DONT_CARE);
-            isFullscreen = false;
-        }
-        else {
-            glfwSetWindowMonitor(window, NULL, 0, 0, 1280, 720, GLFW_DONT_CARE);
-            isFullscreen = true;
-        }
-
-    }
         
 }
 
