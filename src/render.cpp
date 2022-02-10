@@ -178,7 +178,7 @@ int main()
     //takes in vec4 as input because of requirements
     //opengl automatically casts our vertices to vec4s
 
-    ShaderProgramSource source = ParseShader("Basic.shader");
+    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
     std::cout << "----------Vertex Shader------------------" << std::endl;
     std::cout << source.VertexSource << std::endl;
     std::cout << "--------- Fragment Shader ---------------" << std::endl;

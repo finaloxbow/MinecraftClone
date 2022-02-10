@@ -21,12 +21,12 @@
     <ClCompile Include="..\..\..\Downloads\glad (1)\src\glad.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="render.cpp">
+    <ClCompile Include="src\render.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Basic.shader">
+    <None Include="res\shaders\Basic.shader">
       <Filter>res\shaders</Filter>
     </None>
   </ItemGroup>
