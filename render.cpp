@@ -5,6 +5,8 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+
+//helper functions to create shader program
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
 static unsigned int CompileShader(unsigned int type, const std::string& source);
 
@@ -113,8 +115,8 @@ int main()
         "   color = vec4(1.0, 0.0, 0.0, 1.0);\n"
         "}\n";
 
+    //creates the shader program to use
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
-    glUseProgram(shader);
 
     // render loop
     // -----------
@@ -128,6 +130,8 @@ int main()
         // ------
         glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        //using the shader program
         glUseProgram(shader);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -163,8 +167,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+//creates the shader program
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
     
+    //creates program and compiles shaders from their source code
     unsigned int program = glCreateProgram();
     unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
     unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
@@ -174,12 +180,14 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
     glLinkProgram(program);
     glValidateProgram(program);
 
+    //shader cleanup
     glDeleteShader(vs);
     glDeleteShader(fs);
 
     return program;
 }
 
+//helper function to compile a shader of some type
 static unsigned int CompileShader(unsigned int type, const std::string& source) {
     unsigned int id = glCreateShader(type);
     const char* src = source.c_str();
