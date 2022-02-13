@@ -67,6 +67,7 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
     return program;
 }
 
+//reads in shaders from file and returns struct consisting of vertex and fragment shader source code
 static ShaderProgramSource ParseShader(const std::string& filepath) {
 
     std::ifstream stream(filepath);
@@ -141,24 +142,37 @@ int main()
 
     //rendering done here
     //-------------------
-    float positions[6] = {
-        -0.5f, -0.5f,
-        0.0f, 0.5f,
-        0.5f, -0.5f
+    float positions[] = {
+        -0.5f, -0.5f,   // 0
+         0.5f, -0.5f,   // 1
+         0.5f,  0.5f,   // 2
+        -0.5f,  0.5f    // 3
     };
 
-    //generating buffers on GPU from vertex data
-    //TODO: find out why VAO required here for objects to render
+    //order of how to draw indices
+    unsigned int indices[] = {
+        0, 1 ,2,    // first triangle
+        2, 3, 0     // second triangle
+    };
+
+    //- generating buffers on GPU from vertex data
+    //- VAO = Vertex Array Object, stores multiple buffers
+    //- is required to render objects using OpenGL
     //----------------------------------------------------------
-    unsigned int buffer, VAO;
+    unsigned int buffer, VAO, IBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &buffer);
+    glGenBuffers(1, &IBO);
     glBindVertexArray(VAO);
 
     //binding the buffer for use
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     //specifying the type, size, actual data, and mode of the vertex data
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+
+    // creating the index buffer object, binding it to the element array buffer slot, and filling with index data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     /*
     - specifying how the vertex data is structured
@@ -171,8 +185,11 @@ int main()
     - last param is the offset of the first vertex attribute from the beginning of the data
 
     */
-    glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    
+
 
     //shaders written in GLSL to run on the GPU
     //takes in vec4 as input because of requirements
@@ -202,7 +219,7 @@ int main()
 
         //using the shader program
         glUseProgram(shader);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
