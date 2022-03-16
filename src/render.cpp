@@ -1,10 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Shader.h"
+
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -12,11 +12,6 @@ void processInput(GLFWwindow* window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
-struct ShaderProgramSource {
-    std::string VertexSource;
-    std::string FragmentSource;
-};
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -37,67 +32,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-//helper function to compile a shader of some type
-static unsigned int CompileShader(unsigned int type, const std::string& source) {
-    unsigned int id = glCreateShader(type);
-    const char* src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
-
-    return id;
-}
-
-//creates the shader program
-static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
-
-    //creates program and compiles shaders from their source code
-    unsigned int program = glCreateProgram();
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    //shader cleanup
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return program;
-}
-
-//reads in shaders from file and returns struct consisting of vertex and fragment shader source code
-static ShaderProgramSource ParseShader(const std::string& filepath) {
-
-    std::ifstream stream(filepath);
-
-    enum class ShaderType {
-        NONE = -1,
-        VERTEX = 0,
-        FRAGMENT = 1
-    };
-
-    std::string line;
-    std::stringstream ss[2];
-    ShaderType type = ShaderType::NONE;
-
-    while (getline(stream, line)) {
-        if (line.find("#shader") != std::string::npos) {
-            if (line.find("vertex") != std::string::npos)
-                type = ShaderType::VERTEX;
-            else if (line.find("fragment") != std::string::npos)
-                type = ShaderType::FRAGMENT;
-        }
-        else {
-            //makes sure garbage isnt read in from shader file
-            if (type != ShaderType::NONE)
-                ss[(int)type] << line << '\n';
-        }
-    }
-
-    return { ss[0].str(), ss[1].str() };
-}
 
 int main()
 {
@@ -127,6 +61,9 @@ int main()
     //makes window context current
     //----------------------------
     glfwMakeContextCurrent(window);
+
+    //syncs with monitor refresh rate
+    glfwSwapInterval(1);
 
     //setting window size change function pointer
     //-------------------------------------------
@@ -195,14 +132,17 @@ int main()
     //takes in vec4 as input because of requirements
     //opengl automatically casts our vertices to vec4s
 
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-    std::cout << "----------Vertex Shader------------------" << std::endl;
-    std::cout << source.VertexSource << std::endl;
-    std::cout << "--------- Fragment Shader ---------------" << std::endl;
-    std::cout << source.FragmentSource << std::endl;
+    //creates and starts program
+    Shader shader("res/shaders/Basic.shader");
+    glUseProgram(shader.ID);
 
-    //creates the shader program to use
-    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+    //finding uniform in shader program and setting color from program
+    //instead of GLSL file
+    int location = glGetUniformLocation(shader.ID, "u_Color");
+    
+    float r = 0.0f;
+    float increment = 0.05f;
+
 
     // render loop
     // -----------
@@ -218,10 +158,18 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         //using the shader program
-        glUseProgram(shader);
+        glUseProgram(shader.ID);
+        //sets the value of the uniform
+        glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        //updates the color of the rectangle
+        if (r > 1.0f)
+            increment = -0.05f;
+        else if (r < 0.0f)
+            increment = 0.05f;
 
+        r += increment;
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -230,7 +178,7 @@ int main()
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
-    glDeleteProgram(shader);
+    glDeleteProgram(shader.ID);
     glfwTerminate();
     return 0;
 }
