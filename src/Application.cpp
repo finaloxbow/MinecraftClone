@@ -2,6 +2,10 @@
 #include <GLFW/glfw3.h>
 
 #include "Shader.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VerterBufferLayout.h"
 
 #include <iostream>
 
@@ -96,20 +100,17 @@ int main()
     //- VAO = Vertex Array Object, stores multiple buffers
     //- is required to render objects using OpenGL
     //----------------------------------------------------------
-    unsigned int buffer, VAO, IBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &buffer);
-    glGenBuffers(1, &IBO);
-    glBindVertexArray(VAO);
+    VertexArray va;
+    
 
     //binding the buffer for use
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
     //specifying the type, size, actual data, and mode of the vertex data
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+    VertexBuffer vb(positions, sizeof(positions));
 
     // creating the index buffer object, binding it to the element array buffer slot, and filling with index data
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    IndexBuffer ib(indices, 6);
+
+    
 
     /*
     - specifying how the vertex data is structured
@@ -122,9 +123,9 @@ int main()
     - last param is the offset of the first vertex attribute from the beginning of the data
 
     */
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
+    VertexBufferLayout layout;
+    layout.Push<float>(2);
+    va.AddBuffer(vb, layout);
     
 
 
@@ -161,6 +162,9 @@ int main()
         glUseProgram(shader.ID);
         //sets the value of the uniform
         glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
+
+        va.Bind();
+        ib.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //updates the color of the rectangle

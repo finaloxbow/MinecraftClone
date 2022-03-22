@@ -23,9 +23,6 @@ class Shader {
 public:
     //shader program ID
     unsigned int ID;
-
-    //default constructor: sets ID to 0
-    Shader();
     
     //creates Shader Program
     Shader(const std::string& shaderFilePath);

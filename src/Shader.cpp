@@ -8,10 +8,6 @@
 #include "Shader.h"
 
 
-Shader::Shader() {
-    ID = 0;
-}
-
 //creates Shader Program
 Shader::Shader(const std::string& shaderFilePath) {
 
