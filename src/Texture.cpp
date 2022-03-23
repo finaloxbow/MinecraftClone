@@ -1,7 +1,7 @@
 
 #include "Texture.h"
 #include <glad/glad.h>
-#include "vendor/stb_image.h"
+#include "stb_image.h"
 
 
 Texture::Texture(const std::string& path)
