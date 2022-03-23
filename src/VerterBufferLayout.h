@@ -6,10 +6,14 @@
 
 struct VertexBufferElement
 {
+	//count of elements
 	unsigned int count;
+	//type of elements
 	unsigned int type;
+	//whether normalized to (-1, 1)
 	bool normalized;
 
+	//gets size of type given by GL enum
 	static unsigned int GetSizeOfType(unsigned int type) {
 		switch (type) {
 		case GL_FLOAT:			return 4;
@@ -21,9 +25,11 @@ struct VertexBufferElement
 	}
 };
 
+//abstraction of buffer layouts
 class VertexBufferLayout 
 {
 private:
+	//layouts stored into vector to be used in draw calls, etc.
 	std::vector<VertexBufferElement> m_Elements;
 	unsigned int m_Stride;
 public:

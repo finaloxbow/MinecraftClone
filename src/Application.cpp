@@ -1,14 +1,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 #include "Shader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "VerterBufferLayout.h"
-
-#include <iostream>
-
+#include "Renderer.h"
+#include "Texture.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -84,10 +84,10 @@ int main()
     //rendering done here
     //-------------------
     float positions[] = {
-        -0.5f, -0.5f,   // 0
-         0.5f, -0.5f,   // 1
-         0.5f,  0.5f,   // 2
-        -0.5f,  0.5f    // 3
+        -0.5f, -0.5f,   0.0f, 0.0f, // 0
+         0.5f, -0.5f,   1.0f, 0.0f, // 1
+         0.5f,  0.5f,   1.0f, 1.0f, // 2
+        -0.5f,  0.5f,   0.0f, 1.0f  // 3
     };
 
     //order of how to draw indices
@@ -125,6 +125,7 @@ int main()
     */
     VertexBufferLayout layout;
     layout.Push<float>(2);
+    layout.Push<float>(2);
     va.AddBuffer(vb, layout);
     
 
@@ -135,11 +136,20 @@ int main()
 
     //creates and starts program
     Shader shader("res/shaders/Basic.shader");
-    glUseProgram(shader.ID);
+    shader.Bind();
 
-    //finding uniform in shader program and setting color from program
-    //instead of GLSL file
-    int location = glGetUniformLocation(shader.ID, "u_Color");
+    //loads texture and binds it to texture slot 0
+    Texture texture("res/textures/texturelol.jpg");
+    texture.Bind();
+    shader.SetUniform1i("u_Texture", 0);
+
+    va.Unbind();
+    vb.Unbind();
+    ib.Unbind();
+    shader.Unbind();
+
+    //creates renderer which handles draw calls
+    Renderer renderer;
     
     float r = 0.0f;
     float increment = 0.05f;
@@ -156,16 +166,19 @@ int main()
         // render
         // ------
         glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        renderer.Clear();
 
         //using the shader program
-        glUseProgram(shader.ID);
+        shader.Bind();
         //sets the value of the uniform
-        glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
+        shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
+        //binds vertex array and index buffers
         va.Bind();
         ib.Bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        //issues draw call using vertex array, index buffer, and shader
+        renderer.Draw(va, ib, shader);
 
         //updates the color of the rectangle
         if (r > 1.0f)
@@ -182,7 +195,6 @@ int main()
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
-    glDeleteProgram(shader.ID);
     glfwTerminate();
     return 0;
 }

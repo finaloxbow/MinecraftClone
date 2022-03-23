@@ -36,6 +36,15 @@
     <ClCompile Include="src\VertexArray.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vendor\stb_image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader">
@@ -58,5 +67,19 @@
     <ClInclude Include="src\VerterBufferLayout.h">
       <Filter>headers</Filter>
     </ClInclude>
+    <ClInclude Include="src\Renderer.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vendor\stb_image.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\textures\texturelol.jpg">
+      <Filter>res</Filter>
+    </Image>
   </ItemGroup>
 </Project>

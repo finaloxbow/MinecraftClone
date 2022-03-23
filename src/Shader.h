@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
 
 struct ShaderProgramSource {
     std::string VertexSource;
@@ -22,18 +23,36 @@ enum class ShaderType {
 class Shader {
 public:
     //shader program ID
-    unsigned int ID;
+    unsigned int m_RendererID;
+    std::string m_FilePath;
+    std::unordered_map<std::string, int> m_UniformLocationCache;
     
-    //creates Shader Program
+    //creates/destroys Shader Program
     Shader(const std::string& shaderFilePath);
+    ~Shader();
+
+    
+
+    //bind shaders to use in program
+    void Bind() const;
+    void Unbind() const;
+
+    //set uniforms
+    void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
+    void SetUniform1i(const std::string& name, int i);
+
+private:
+    //gets the location of the uniform
+    int GetUniformLocation(const std::string& name);
 
     //helper function to compile a shader of some type
     static unsigned int CompileShader(unsigned int type, const std::string& source);
 
     //reads in shaders from file and returns struct consisting of vertex and fragment shader source code
-    static ShaderProgramSource ParseShader(const std::string & filepath);
-
-
+    static ShaderProgramSource ParseShader(const std::string& filepath);
+    
+    //creates shader program
+    unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
 
 };
 

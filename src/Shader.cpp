@@ -9,33 +9,24 @@
 
 
 //creates Shader Program
-Shader::Shader(const std::string& shaderFilePath) {
-
+Shader::Shader(const std::string& shaderFilePath)
+    : m_FilePath(shaderFilePath), m_RendererID(0)
+{
     //create shader file path var as arg to replace the two curr args
-    ShaderProgramSource source = Shader::ParseShader(shaderFilePath);
-        
+    ShaderProgramSource source = ParseShader(shaderFilePath);
+    
     //prints out shader source file
     std::cout << "----------Vertex Shader------------------" << std::endl;
     std::cout << source.VertexSource << std::endl;
     std::cout << "--------- Fragment Shader ---------------" << std::endl;
     std::cout << source.FragmentSource << std::endl;
 
-        
-    //creates program and compiles shaders from their source code
-    unsigned int program = glCreateProgram();
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, source.VertexSource);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, source.FragmentSource);
+    m_RendererID = CreateShader(source.VertexSource, source.FragmentSource);
+}
 
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    //shader cleanup
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    ID = program;
+Shader::~Shader()
+{
+    glDeleteProgram(m_RendererID);
 }
 
 //helper function to compile a shader of some type
@@ -72,5 +63,58 @@ ShaderProgramSource Shader::ParseShader(const std::string& filepath) {
     }
 
     return { ss[0].str(), ss[1].str() };
+}
+
+//creates the shader program
+unsigned int Shader::CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+{
+    //creates program and compiles shaders from their source code
+    unsigned int program = glCreateProgram();
+    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER,fragmentShader);
+
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    //shader cleanup
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
+}
+
+void Shader::Bind() const
+{
+    glUseProgram(m_RendererID);
+}
+
+void Shader::Unbind() const
+{
+    glUseProgram(0);
+}
+
+void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+{
+    glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
+}
+
+void Shader::SetUniform1i(const std::string& name, int i)
+{
+    glUniform1i(GetUniformLocation(name), i);
+}
+
+int Shader::GetUniformLocation(const std::string& name)
+{
+    if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
+        return m_UniformLocationCache[name];
+
+    int location = glGetUniformLocation(m_RendererID, name.c_str());
+    if (location == -1)
+        std::cout << "Warning: uniform '" << name << "' doesn't exist." << std::endl;
+        
+    m_UniformLocationCache[name] = location;
+    return location;
 }
 
