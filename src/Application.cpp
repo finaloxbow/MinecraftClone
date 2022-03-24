@@ -84,9 +84,6 @@ int main()
     //makes window context current
     //----------------------------
     glfwMakeContextCurrent(window);
-
-    //syncs with monitor refresh rate
-    glfwSwapInterval(1);
     
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -125,6 +122,7 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         
         camera.calc_time(currentFrame);
+        std::cout << "FPS: " << 1 / (camera.getFrameTime()) << std::endl;
 
         // input
         // -----

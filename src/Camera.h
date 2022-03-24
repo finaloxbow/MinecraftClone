@@ -39,6 +39,8 @@ public:
 	//calculate time
 	void calc_time(float currentFrame);
 
+	inline float getFrameTime() { return deltaTime; }
+
 	//MVP matrix getters
 	glm::mat4 getPerspectiveMatrix();
 	glm::mat4 getViewMatrix();

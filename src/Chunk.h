@@ -10,48 +10,66 @@
 
 #define VERTICES_COUNT 36
 
-const static float positions[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+//front is side on the xy-plane
+const static float blockFront[] = {
+    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
 
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,   0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f,   1.0f, 1.0f
+};
 
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+const static float blockBack[] = {
+    0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+    1.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+    0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,   1.0f, 1.0f
+};
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+const static float blockRight[] = {
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    0.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
+    0.0f, 1.0f, 1.0f,   1.0f, 1.0f
+};
+
+const static float blockLeft[] = {
+    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+
+    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+    1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+    1.0f, 1.0f, 0.0f,   1.0f, 1.0f
+};
+
+const static float blockTop[] = {
+    0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,   1.0f, 0.0f,
+    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+
+    0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
+    0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+};
+
+const static float blockBottom[] = {
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,   0.0f, 1.0f,
+    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,
 };
 
 const static unsigned int CHUNK_SIZE = 16;
@@ -82,5 +100,7 @@ public:
     void UpdateBlock(int xpos, int ypos, int zpos, bool isActive);
     //checks whether block at chunk position is actively rendered
     bool isActive(int xpos, int ypos, int zpos);
+
+    void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
 
 };

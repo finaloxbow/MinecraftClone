@@ -1,6 +1,5 @@
 #include "Chunk.h"
 
-//resolve weird code dup here
 
 Chunk::Chunk(Camera* cameraIn)
     : camera(cameraIn)
@@ -16,6 +15,7 @@ Chunk::Chunk(Camera* cameraIn)
 
     //rendering starting info
     std::vector<float> verts;
+    float tempArr[30];
 
     //precompile all necessary vertex data for a 
     // single flat chunk into a single vector
@@ -23,12 +23,43 @@ Chunk::Chunk(Camera* cameraIn)
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
                 if (activeBlockList[x][y][z]) {
-                    for (int t = 0; t < 5 * 6 * 6; t += 5) {
-                        verts.push_back(positions[t] + x);
-                        verts.push_back(positions[t + 1] + y);
-                        verts.push_back(positions[t + 2] + z);
-                        verts.push_back(positions[t + 3]);
-                        verts.push_back(positions[t + 4]);
+                    //if other block not rendered, render face
+
+                    if ((x > 0 && !activeBlockList[x-1][y][z]) || x == 0) {
+                        //render right
+                        transFace(blockRight, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((x < CHUNK_SIZE - 1 && !activeBlockList[x + 1][y][z]) || x == CHUNK_SIZE-1) {
+                        //render left
+                        transFace(blockLeft, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((y > 0 && !activeBlockList[x][y - 1][z]) || y == 0) {
+                        //render bottom
+                        transFace(blockBottom, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((y < CHUNK_SIZE - 1 && !activeBlockList[x][y + 1][z]) || y == CHUNK_SIZE - 1) {
+                        //render top
+                        transFace(blockTop, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((z > 0 && !activeBlockList[x][y][z - 1]) || z == 0) {
+                        //render front
+                        transFace(blockFront, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((z < CHUNK_SIZE - 1 && !activeBlockList[x][y][z + 1]) || z == CHUNK_SIZE - 1) {
+                        //render back
+                        transFace(blockBack, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
                     }
                 }
             }
@@ -56,6 +87,7 @@ Chunk::Chunk(Camera* cameraIn)
 void Chunk::SetData() {
     //rendering starting info
     std::vector<float> verts;
+    float tempArr[30];
 
     //precompile all necessary vertex data for a 
     // single flat chunk into a single vector
@@ -63,13 +95,43 @@ void Chunk::SetData() {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
                 if (activeBlockList[x][y][z]) {
-                    //adds all translated block positions to verts
-                    for (int t = 0; t < 5 * 6 * 6; t += 5) {
-                        verts.push_back(positions[t] + x);
-                        verts.push_back(positions[t + 1] + y);
-                        verts.push_back(positions[t + 2] + z);
-                        verts.push_back(positions[t + 3]);
-                        verts.push_back(positions[t + 4]);
+                    //if other block not rendered, render face
+
+                    if ((x > 0 && !activeBlockList[x - 1][y][z]) || x == 0) {
+                        //render right
+                        transFace(blockRight, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((x < CHUNK_SIZE - 1 && !activeBlockList[x + 1][y][z]) || x == CHUNK_SIZE - 1) {
+                        //render left
+                        transFace(blockLeft, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((y > 0 && !activeBlockList[x][y - 1][z]) || y == 0) {
+                        //render bottom
+                        transFace(blockBottom, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((y < CHUNK_SIZE - 1 && !activeBlockList[x][y + 1][z]) || y == CHUNK_SIZE - 1) {
+                        //render top
+                        transFace(blockTop, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((z > 0 && !activeBlockList[x][y][z - 1]) || z == 0) {
+                        //render front
+                        transFace(blockFront, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
+                    }
+                    if ((z < CHUNK_SIZE - 1 && !activeBlockList[x][y][z + 1]) || z == CHUNK_SIZE - 1) {
+                        //render back
+                        transFace(blockBack, tempArr, 30, x, y, z);
+                        for (int i = 0; i < 30; i++)
+                            verts.push_back(tempArr[i]);
                     }
                 }
             }
@@ -98,7 +160,7 @@ void Chunk::Render()
     //model view projection matrix sent to shader
     shader.SetUniformMat4f("u_MVP", MVP);
 
-
+    
     shader.Bind();
     va.Bind();
 
@@ -118,3 +180,20 @@ bool Chunk::isActive(int xpos, int ypos, int zpos)
 {
 	return activeBlockList[xpos][ypos][zpos];
 }
+
+//translates elements of arr are put into newArr
+//specifically designed for the static block vertices arrays
+void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y, int z)
+{
+    for (int i = 0; i < size; i += 5) {
+        //block positions translated
+        newArr[i] = arr[i] + x;
+        newArr[i+1] = arr[i+1] + y;
+        newArr[i + 2] = arr[i + 2] + z;
+
+        //texture coords unchanged
+        newArr[i + 3] = arr[i + 3];
+        newArr[i + 4] = arr[i + 4];
+    }
+}
+
