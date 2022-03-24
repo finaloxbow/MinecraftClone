@@ -1,10 +1,15 @@
 #include "IndexBuffer.h"
 #include <glad/glad.h>
 
+
+IndexBuffer::IndexBuffer()
+	:	m_RendererID(0), m_Count(0)
+{}
+
 //generates the index buffer and sets how it is organized based on the count arg
-IndexBuffer::IndexBuffer(const unsigned int* data, unsigned int count)
-	: m_Count(count)
+void IndexBuffer::Set_Data(const unsigned int* data, unsigned int count)
 {
+	m_Count = count;
 	glGenBuffers(1, &m_RendererID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(unsigned int), data, GL_STATIC_DRAW);

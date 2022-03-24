@@ -36,9 +36,6 @@
     <ClCompile Include="src\VertexArray.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Renderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\vendor\stb_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -497,9 +494,6 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\VertexBufferLayout.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Renderer.h">
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\vendor\stb_image.h">

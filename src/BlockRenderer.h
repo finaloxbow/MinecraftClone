@@ -1,6 +1,6 @@
 #pragma once
 
-#define TRIANGLE_COUNT 36
+#define VERTICES_COUNT 36
 
 #include "VertexBufferLayout.h"
 #include "VertexArray.h"
@@ -9,6 +9,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera.h"
+#include "IndexBuffer.h"
 
 
 class BlockRenderer {
@@ -21,12 +22,11 @@ private:
     Texture texture;
     Camera* camera;
 
-    //block world coords
-    float xpos, ypos, zpos;
 public:
     //block renderer obj holds all initial data (vertex array, attrib, etc.)
-    BlockRenderer(Camera* camera, float xposIn, float yposIn, float zposIn);
+    BlockRenderer(Camera* camera);
 
 	//draws a block at these world coordinates
-	void drawBlock();
+	void drawBlock(float xpos, float ypos, float zpos);
+
 };
