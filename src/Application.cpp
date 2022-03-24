@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera.h"
-#include "BlockRenderer.h"
+#include "Chunk.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -18,8 +18,8 @@ float fov = 60.0f;
 Camera camera;
 
 /*TODO:
-    - fix cube/texture vertex coordinates
-        - research cube map textures
+    - render chunk in a single draw call (DONE)
+    - make it so covered faces are not rendered
 */
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -115,8 +115,7 @@ int main()
 
     //rendering done here
     //-------------------
-    BlockRenderer blockRender(&camera);
-
+    Chunk chunk(&camera);
 
     // render loop
     // -----------
@@ -136,7 +135,7 @@ int main()
         glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        blockRender.drawBlock(0.0f, 0.0f, 0.0f);
+        chunk.Render();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

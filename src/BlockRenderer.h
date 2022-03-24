@@ -2,16 +2,6 @@
 
 #define VERTICES_COUNT 36
 
-#include "VertexBufferLayout.h"
-#include "VertexArray.h"
-#include "Shader.h"
-#include "Texture.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "Camera.h"
-#include "IndexBuffer.h"
-
-
 class BlockRenderer {
 private:
     //required rendering utils
