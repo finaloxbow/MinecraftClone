@@ -4,7 +4,9 @@ class VertexBuffer {
 private:
 	unsigned int m_RendererID;
 public:
-	VertexBuffer(const void* data, unsigned int size);
+	VertexBuffer();
+	//moves buffer init out of constructor
+	void Set_Data(const void* data, unsigned int size);
 	~VertexBuffer();
 
 	void Bind();

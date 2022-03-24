@@ -4,10 +4,17 @@
 #include "stb_image.h"
 
 
-Texture::Texture(const std::string& path)
-	: m_RendererID(0), m_Filepath(path), 
-	m_LocalBuffer(nullptr), m_Width(0), m_Height(0), m_BPP(0)
+Texture::Texture() 
+	: m_RendererID(0), m_LocalBuffer(nullptr), 
+	m_Width(0), m_Height(0), m_BPP(0)
 {
+}
+
+void Texture::Set_Data(const std::string& path)
+{
+	//sets file path
+	m_Filepath = path;
+
 	//since image loads upside down, function flips it automatically
 	stbi_set_flip_vertically_on_load(1);
 	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);

@@ -10,8 +10,12 @@ private:
 	unsigned char* m_LocalBuffer;	//cached image data
 	int m_Width, m_Height, m_BPP;	//width, height, bytes per pixel of image
 public:
+
+	Texture();
+
 	//creates/destroys texture from file path
-	Texture(const std::string& path);
+	//committal ops moved here
+	void Set_Data(const std::string& path);
 	~Texture();
 
 	//binds/unbinds texture from texture slot (default = 0)

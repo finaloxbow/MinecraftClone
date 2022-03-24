@@ -28,9 +28,11 @@ public:
     unsigned int m_RendererID;
     std::string m_FilePath;
     std::unordered_map<std::string, int> m_UniformLocationCache;
-    
+
     //creates/destroys Shader Program
-    Shader(const std::string& shaderFilePath);
+    Shader();
+    //moves committal operations out of constructor
+    void Set_Data(const std::string& shaderFilePath);
     ~Shader();
 
     

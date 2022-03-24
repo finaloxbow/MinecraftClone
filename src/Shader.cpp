@@ -9,12 +9,15 @@
 
 
 //creates Shader Program
-Shader::Shader(const std::string& shaderFilePath)
-    : m_FilePath(shaderFilePath), m_RendererID(0)
-{
+Shader::Shader()
+    :   m_RendererID(0)
+{  
+}
+
+void Shader::Set_Data(const std::string& shaderFilePath) {
     //create shader file path var as arg to replace the two curr args
     ShaderProgramSource source = ParseShader(shaderFilePath);
-    
+
     //prints out shader source file
     std::cout << "----------Vertex Shader------------------" << std::endl;
     std::cout << source.VertexSource << std::endl;

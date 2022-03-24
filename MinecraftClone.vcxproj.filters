@@ -48,6 +48,12 @@
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\BlockRenderer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader">
@@ -490,7 +496,7 @@
     <ClInclude Include="src\VertexArray.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="src\VerterBufferLayout.h">
+    <ClInclude Include="src\VertexBufferLayout.h">
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer.h">
@@ -1361,6 +1367,12 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\vendor\glm\vector_relational.hpp">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BlockRenderer.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
