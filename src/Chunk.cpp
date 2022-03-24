@@ -1,9 +1,18 @@
 #include "Chunk.h"
 
+Chunk::Chunk()
+{
+    pos.xpos = 0;
+    pos.zpos = 0;
+}
 
-Chunk::Chunk(Camera* cameraIn)
+//xpos and ypos are in "chunk space" (e.g. origin is (0,0) and )
+Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     : camera(cameraIn)
 {
+    pos.xpos = xpos * 16;
+    pos.zpos = zpos * 16;
+
     //fill activeBlockList with initial values
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
@@ -187,11 +196,11 @@ void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y,
 {
     for (int i = 0; i < size; i += 5) {
         //block positions translated
-        newArr[i] = arr[i] + x;
+        newArr[i] = arr[i] + x + pos.xpos;
         newArr[i+1] = arr[i+1] + y;
-        newArr[i + 2] = arr[i + 2] + z;
+        newArr[i + 2] = arr[i + 2] + z + pos.zpos;
 
-        //texture coords unchanged
+        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
         newArr[i + 3] = arr[i + 3];
         newArr[i + 4] = arr[i + 4];
     }

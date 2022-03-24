@@ -112,7 +112,8 @@ int main()
 
     //rendering done here
     //-------------------
-    Chunk chunk(&camera);
+    Chunk chunk1(&camera, 3, 3);
+
 
     // render loop
     // -----------
@@ -133,7 +134,7 @@ int main()
         glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        chunk.Render();
+        chunk1.Render();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

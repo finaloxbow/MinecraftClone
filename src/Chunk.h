@@ -10,6 +10,12 @@
 
 #define VERTICES_COUNT 36
 
+typedef struct {
+    int xpos, zpos;
+} chunkPos;
+
+//render different textures for each side of block
+//also add support for other materials later?
 
 //front is side on the xy-plane
 const static float blockFront[] = {
@@ -87,9 +93,14 @@ private:
     //holds whether a block is active at a certain chunk position
     bool activeBlockList[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
+    //chunk positions
+    chunkPos pos;
+
 public:
 
-    Chunk(Camera* camera);
+    Chunk();
+
+    Chunk(Camera* camera, int xpos, int ypos);
     ~Chunk();
 
     //sets OpenGL data
