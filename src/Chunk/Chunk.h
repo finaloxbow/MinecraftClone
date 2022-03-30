@@ -5,7 +5,7 @@
 #include "Texture.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "Camera.h"
+#include "Camera/Camera.h"
 #include "IndexBuffer.h"
 
 #define VERTICES_COUNT 36
@@ -85,9 +85,14 @@ private:
     //OpenGL rendering requirements
     VertexArray va;
     VertexBuffer vb;
-    VertexBufferLayout layout;
-    Shader shader;
-    Texture texture;
+
+    //make layout, shader, texture static to be used by all chunks after an initial load
+    static bool staticInit;
+
+    static VertexBufferLayout layout;
+    static Shader shader;
+    static Texture texture;
+    
     Camera* camera;
 
     //holds whether a block is active at a certain chunk position
@@ -101,7 +106,7 @@ public:
     Chunk();
 
     Chunk(Camera* camera, int xpos, int ypos);
-    ~Chunk();
+    
 
     //sets OpenGL data
     void SetData();

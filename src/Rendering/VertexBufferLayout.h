@@ -54,6 +54,12 @@ public:
 		m_Elements.push_back(VBE);
 		m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT);
 	}
+	template<>
+	void Push<GLubyte>(unsigned int count) {
+		struct VertexBufferElement VBE = { count, GL_UNSIGNED_BYTE, false };
+		m_Elements.push_back(VBE);
+		m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+	}
 
 
 	std::vector<VertexBufferElement> GetElements() const { return m_Elements; }

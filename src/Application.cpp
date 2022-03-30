@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera.h"
-#include "Chunk.h"
+#include "ChunkManager.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -112,9 +112,9 @@ int main()
 
     //rendering done here
     //-------------------
-    Chunk chunk1(&camera, 3, 3);
+    ChunkManager chunkMgr(&camera);
 
-
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -134,7 +134,9 @@ int main()
         glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        chunk1.Render();
+        chunkMgr.Update_Loaded_Chunks();
+        chunkMgr.Render_Chunks();
+
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -144,6 +146,8 @@ int main()
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+    
+
     glfwTerminate();
     return 0;
 }

@@ -40,6 +40,7 @@ public:
 	void calc_time(float currentFrame);
 
 	inline float getFrameTime() { return deltaTime; }
+	inline glm::vec3 getPosition() { return cameraPos; };
 
 	//MVP matrix getters
 	glm::mat4 getPerspectiveMatrix();
