@@ -19,9 +19,9 @@ Camera::Camera()
 
 void Camera::keyboard_input(GLFWwindow* window)
 {
-    //change this to "glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));"
+    //change this to "glm::normalize(glm::vec3(cameraFront.x, 16.0f, cameraFront.z));"
     //for true FPS camera
-    float cameraSpeed = static_cast<float>(5 * deltaTime);
+    float cameraSpeed = static_cast<float>(15 * deltaTime);
     glm::vec3 flatFront = cameraFront;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
