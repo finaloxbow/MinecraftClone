@@ -12,6 +12,8 @@ private:
 	std::unordered_map<glm::vec2, Chunk*> chunkList;
 	//list of loaded chunks
 	std::unordered_map<glm::vec2, Chunk*> loadedChunks;
+	//list of unloaded chunks
+	std::unordered_map<glm::vec2, Chunk*> unloadedChunks;
 	Camera* camera;
 
 public:
@@ -20,6 +22,8 @@ public:
 
 	//render all chunks in visibility list
 	void Render_Chunks();
+
+	void Clear_Loaded_Chunks();
 
 	//update loaded chunk list to contain only chunks within some distance
 	//of the camera position

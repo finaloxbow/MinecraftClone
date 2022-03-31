@@ -13,7 +13,7 @@ Chunk::Chunk()
     camera = nullptr;
 }
 
-//xpos and ypos are in "chunk space" (e.g. origin is (0,0) and )
+
 Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     : camera(cameraIn)
 {
@@ -27,8 +27,8 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
         staticInit = true;
     }
 
-    pos.xpos = xpos * 16;
-    pos.zpos = zpos * 16;
+    pos.xpos = xpos;
+    pos.zpos = zpos;
 
     //fill activeBlockList with initial values
     for (int x = 0; x < CHUNK_SIZE; x++) {

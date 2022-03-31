@@ -27,9 +27,21 @@ void ChunkManager::Render_Chunks()
 	}
 }
 
+//clear
+void ChunkManager::Clear_Loaded_Chunks() {
+	loadedChunks.clear();
+}
 
+/*
+	- update load list
+	- update unload list
+	- add extra chunks if necessary?
+*/
 void ChunkManager::Update_Loaded_Chunks()
 {
+	//clear loaded chunks before computation
+	Clear_Loaded_Chunks();
+
 	//need to create new chunks around player and use ones already in chunkList
 	glm::vec3 camPos = camera->getPosition();
 
@@ -37,6 +49,8 @@ void ChunkManager::Update_Loaded_Chunks()
 	for (float i = camPos.x - 16 * 2; i < camPos.x + 16 * 2; i += 16.0) {
 		for (float j = camPos.z - 16 * 2; j < camPos.z + 16 * 2; j += 16.0) {
 			if (pow(camPos.x - i, 2) + pow(camPos.z - j, 2) < 4 * 4) {
+
+				//@TODO: need to render chunks only at multiple of 16
 				if (chunkList.find({ i, j }) != chunkList.end()) {
 					loadedChunks.insert({ glm::vec2(i, j) , chunkList.find({i, j})->second });
 				}
@@ -48,6 +62,7 @@ void ChunkManager::Update_Loaded_Chunks()
 			}
 		}
 	}
+
 
 
 
