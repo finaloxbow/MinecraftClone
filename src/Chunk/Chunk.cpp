@@ -5,12 +5,20 @@ VertexBufferLayout Chunk::layout;
 Shader Chunk::shader;
 Texture Chunk::texture;
 bool Chunk::staticInit = false;
+Noise Chunk::noiseGen;
 
 Chunk::Chunk()
 {
     pos.xpos = 0;
     pos.zpos = 0;
     camera = nullptr;
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int y = 0; y < CHUNK_SIZE; y++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                activeBlockList[x][y][z] = true;
+            }
+        }
+    }
 }
 
 
@@ -32,9 +40,16 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
 
     //fill activeBlockList with initial values
     for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_SIZE; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            
+            //within range [1, CHUNK_SIZE - 1]
+            int height = ((CHUNK_SIZE - 2)/2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
+            
+            for (int y = 0; y < height; y++) {
                 activeBlockList[x][y][z] = true;
+            }
+            for (int y = height; y < CHUNK_SIZE; y++) {
+                activeBlockList[x][y][z] = false;
             }
         }
     }
@@ -156,4 +171,3 @@ void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y,
         newArr[i + 4] = arr[i + 4];
     }
 }
-

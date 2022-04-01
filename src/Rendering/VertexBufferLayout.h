@@ -40,7 +40,6 @@ public:
 
 	template<typename T>
 	void Push(unsigned int count) {
-		static_assert(false);
 	}
 	template<>
 	void Push<float>(unsigned int count) {

@@ -7,6 +7,9 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera/Camera.h"
 #include "IndexBuffer.h"
+#include "Noise/Noise.h"
+
+#include <cmath>
 
 #define VERTICES_COUNT 36
 
@@ -100,6 +103,9 @@ private:
 
     //chunk positions
     chunkPos pos;
+
+    //noise generation
+    static Noise noiseGen;
 
 public:
 

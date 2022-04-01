@@ -4,6 +4,7 @@
 	- fix chunk rendering around camera position
 */
 
+
 ChunkManager::ChunkManager(Camera* camera)
 	: camera(camera)
 {
@@ -60,10 +61,6 @@ void ChunkManager::Update_Loaded_Chunks()
 					loadedChunks.insert({ glm::vec2(i, j) , chunkList.find({i, j})->second });
 				}
 				else {
-					/*loadedChunks.insert({ glm::vec2{i, j}, new Chunk(camera, i, j)});
-					chunkList.insert({ glm::vec2{i, j}, loadedChunks.find(glm::vec2(i,j))->second});
-					loadedChunks.find(glm::vec2(i, j))->second->SetData();*/
-
 					//inserts new chunk into each chunk list and sets its data
 					chunkList.insert({ glm::vec2{i , j}, new Chunk(camera, i, j)});
 					loadedChunks.insert({ {glm::vec2{i, j}, chunkList.find({i,j})->second} });
@@ -78,3 +75,4 @@ void ChunkManager::Update_Loaded_Chunks()
 
 
 }
+
