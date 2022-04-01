@@ -96,6 +96,7 @@ private:
     static Shader shader;
     static Texture texture;
     
+    //camera ptr
     Camera* camera;
 
     //holds whether a block is active at a certain chunk position
@@ -106,6 +107,9 @@ private:
 
     //noise generation
     static Noise noiseGen;
+
+    //height map
+    int heightMap[CHUNK_SIZE][CHUNK_SIZE];
 
 public:
 
@@ -124,5 +128,4 @@ public:
     bool isActive(int xpos, int ypos, int zpos);
 
     void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
-
 };

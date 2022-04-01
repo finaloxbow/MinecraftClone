@@ -12,11 +12,20 @@ Chunk::Chunk()
     pos.xpos = 0;
     pos.zpos = 0;
     camera = nullptr;
+
+    //sets activeBlockList to all true
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 activeBlockList[x][y][z] = true;
             }
+        }
+    }
+
+    //sets height map to all 0
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            heightMap[x][z] = 0;
         }
     }
 }
@@ -38,12 +47,19 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     pos.xpos = xpos;
     pos.zpos = zpos;
 
+    //sets height map to all 0
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            heightMap[x][z] = (int)((CHUNK_SIZE - 2) / 2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
+        }
+    }
+
     //fill activeBlockList with initial values
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             
             //within range [1, CHUNK_SIZE - 1]
-            int height = ((CHUNK_SIZE - 2)/2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
+            int height = heightMap[x][z];
             
             for (int y = 0; y < height; y++) {
                 activeBlockList[x][y][z] = true;
@@ -53,6 +69,8 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
             }
         }
     }
+
+    
 }
 
 void Chunk::SetData() {
@@ -110,7 +128,7 @@ void Chunk::SetData() {
         }
     }
 
-    vb.Set_Data(&verts[0], verts.size() * sizeof(verts[0]));
+    vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
 
     //buffer layouts
     va.AddBuffer(vb, layout);
@@ -171,3 +189,5 @@ void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y,
         newArr[i + 4] = arr[i + 4];
     }
 }
+
+

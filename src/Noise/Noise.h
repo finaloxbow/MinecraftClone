@@ -1,5 +1,6 @@
 #pragma once
 #include "FastNoiseLite.h"
+#include <vector>
 
 class Noise {
 public:
