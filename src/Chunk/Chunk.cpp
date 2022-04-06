@@ -15,9 +15,9 @@ Chunk::Chunk()
 
     //sets activeBlockList to all true
     for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_SIZE; y++) {
+        for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
-                activeBlockList[x][y][z] = true;
+                activeBlockList[x][y][z] = false;
             }
         }
     }
@@ -47,7 +47,7 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     pos.xpos = xpos;
     pos.zpos = zpos;
 
-    //sets height map to all 0
+    //sets height map
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             heightMap[x][z] = (int)((CHUNK_SIZE - 2) / 2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
@@ -64,9 +64,6 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
             for (int y = 0; y < height; y++) {
                 activeBlockList[x][y][z] = true;
             }
-            for (int y = height; y < CHUNK_SIZE; y++) {
-                activeBlockList[x][y][z] = false;
-            }
         }
     }
 
@@ -81,11 +78,14 @@ void Chunk::SetData() {
 
     //precompile all necessary vertex data for a 
     // single flat chunk into a single vector
-    for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-            for (int z = 0; z < 16; z++) {
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int y = 0; y < CHUNK_HEIGHT; y++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
                 if (activeBlockList[x][y][z]) {
                     //if other block not rendered, render face
+
+                    /*@TODO: check whether block to side is active
+                                - if so, do not render current block*/
 
                     if ((x > 0 && !activeBlockList[x - 1][y][z]) || x == 0) {
                         //render right
@@ -105,7 +105,7 @@ void Chunk::SetData() {
                         for (int i = 0; i < 30; i++)
                             verts.push_back(tempArr[i]);
                     }
-                    if ((y < CHUNK_SIZE - 1 && !activeBlockList[x][y + 1][z]) || y == CHUNK_SIZE - 1) {
+                    if ((y < CHUNK_HEIGHT - 1 && !activeBlockList[x][y + 1][z]) || y == CHUNK_HEIGHT - 1) {
                         //render top
                         transFace(blockTop, tempArr, 30, x, y, z);
                         for (int i = 0; i < 30; i++)
@@ -159,9 +159,10 @@ void Chunk::Render()
     va.Bind();
 
     //We are drawing CHUNK_SIZE^3 blocks
-    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * VERTICES_COUNT);
+    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE * VERTICES_COUNT);
 }
 
+//updates whether a block is being rendered
 void Chunk::UpdateBlock(int xpos, int ypos, int zpos, bool isActive)
 {
     activeBlockList[xpos][ypos][zpos] = isActive;

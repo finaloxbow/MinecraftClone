@@ -82,6 +82,7 @@ const static float blockBottom[] = {
 };
 
 const static unsigned int CHUNK_SIZE = 16;
+const static unsigned int CHUNK_HEIGHT = 16;
 
 class Chunk {
 private:
@@ -100,7 +101,7 @@ private:
     Camera* camera;
 
     //holds whether a block is active at a certain chunk position
-    bool activeBlockList[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    bool activeBlockList[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 
     //chunk positions
     chunkPos pos;
@@ -127,5 +128,6 @@ public:
     //checks whether block at chunk position is actively rendered
     bool isActive(int xpos, int ypos, int zpos);
 
+    //translates the vertices of the faces above by (x, y, z)
     void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
 };
