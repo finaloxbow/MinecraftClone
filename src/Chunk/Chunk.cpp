@@ -203,7 +203,13 @@ int Chunk::heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ) {
     //0 to 2
     elev += 1;
 
-    return (int)(((CHUNK_HEIGHT - 2)/2) * elev) + 1;
+    //0 to 1
+    elev /= 2;
+
+    //0 to 1
+    elev = elev * elev * elev;
+
+    return (int)(((CHUNK_HEIGHT - 2)) * elev) + 1;
 }
 
 
