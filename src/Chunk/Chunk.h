@@ -20,6 +20,15 @@ typedef struct {
 //render different textures for each side of block
 //also add support for other materials later?
 
+enum blockFace {
+    BLOCK_FRONT = 1,
+    BLOCK_BACK = 2,
+    BLOCK_RIGHT = 4,
+    BLOCK_LEFT = 8,
+    BLOCK_TOP = 16,
+    BLOCK_BOTTOM = 32
+};
+
 //front is side on the xy-plane
 const static float blockFront[] = {
     1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
@@ -112,6 +121,9 @@ private:
     //height map
     int heightMap[CHUNK_SIZE][CHUNK_SIZE];
 
+    //tracks which faces are to be rendered
+    int blockFaceList[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
+
 public:
 
     Chunk();
@@ -130,5 +142,13 @@ public:
 
     //translates the vertices of the faces above by (x, y, z)
     void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
+    //generates height map
     int heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ);
+
+    //generates the blockk face list
+    void blockFaceGenerator();
+
+    //creates greedy mesh
+    void GreedyMeshGenerator(std::vector<float> vertices);
+    void pushQuad(glm::vec3 bottomLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 bottomRight, std::vector<float> vertices);
 };
