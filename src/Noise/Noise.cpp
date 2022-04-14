@@ -3,7 +3,7 @@
 Noise::Noise()
 {
 	noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
-	noise.SetFrequency(0.07);
+	noise.SetFrequency(0.04);
 }
 
 float Noise::getNoise(int x, int z)

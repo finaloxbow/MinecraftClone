@@ -7,7 +7,7 @@
 
 ChunkManager::ChunkManager(Camera* camera)
 	: camera(camera)
-{
+{ 
 	//initially add 4 chunks around camera
 	chunkList.insert({ glm::vec2(0, 0) , new Chunk(camera, 0, 0)});
 	chunkList.insert({ glm::vec2(0, -1), new Chunk(camera, 0, -1)});
@@ -46,7 +46,7 @@ void ChunkManager::Update_Loaded_Chunks()
 	//need to create new chunks around player and use ones already in chunkList
 	glm::vec3 camPos = camera->getPosition();
 
-	int radius = 4 * CHUNK_SIZE;
+	int radius = 8 * CHUNK_SIZE;
 
 	//loop through square centered at player position and only render chunks in circle around camera
 	//@TODO: 

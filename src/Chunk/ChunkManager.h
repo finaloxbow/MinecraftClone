@@ -6,6 +6,7 @@
 #include <math.h>
 #include "glm/gtx/hash.hpp"
 
+
 class ChunkManager {
 private:
 	//list of all chunks
@@ -26,4 +27,5 @@ public:
 	//update loaded chunk list to contain only chunks within some distance
 	//of the camera position
 	void Update_Loaded_Chunks();
+
 };

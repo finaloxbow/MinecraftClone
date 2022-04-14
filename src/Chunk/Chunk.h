@@ -82,7 +82,7 @@ const static float blockBottom[] = {
 };
 
 const static unsigned int CHUNK_SIZE = 16;
-const static unsigned int CHUNK_HEIGHT = 16;
+const static unsigned int CHUNK_HEIGHT = 64;
 
 class Chunk {
 private:
@@ -130,4 +130,5 @@ public:
 
     //translates the vertices of the faces above by (x, y, z)
     void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
+    int heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ);
 };

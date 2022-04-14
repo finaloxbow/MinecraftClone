@@ -39,7 +39,7 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
         layout.Push<float>(2);
 
         shader.Set_Data("res/shaders/Basic.shader");
-        texture.Set_Data("res/textures/texturelol.jpg");
+        texture.Set_Data("res/textures/concreteTexture.png");
 
         staticInit = true;
     }
@@ -50,7 +50,8 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     //sets height map
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
-            heightMap[x][z] = (int)((CHUNK_SIZE - 2) / 2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
+            //heightMap[x][z] = (int)((CHUNK_HEIGHT - 2) / 2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
+            heightMap[x][z] = heightMapGenerator(pos.xpos, pos.zpos, x, z);
         }
     }
 
@@ -189,6 +190,20 @@ void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y,
         newArr[i + 3] = arr[i + 3];
         newArr[i + 4] = arr[i + 4];
     }
+}
+
+int Chunk::heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ) {
+    
+    //-1.5 to 1.5
+    float elev = (noiseGen.getNoise(xpos + chunkX, zpos + chunkZ)
+            + 0.5 * noiseGen.getNoise(2*(xpos + chunkX),2*( zpos + chunkZ))
+            + 0.25 * noiseGen.getNoise(4*(xpos + chunkX),4*(zpos + chunkZ)));
+    //-1 to 1
+    elev /= 1.75;
+    //0 to 2
+    elev += 1;
+
+    return (int)(((CHUNK_HEIGHT - 2)/2) * elev) + 1;
 }
 
 

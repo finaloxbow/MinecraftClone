@@ -1392,7 +1392,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\textures\texturelol.jpg">
+    <Image Include="res\textures\concreteTexture.png">
       <Filter>res</Filter>
     </Image>
   </ItemGroup>

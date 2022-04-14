@@ -12,8 +12,8 @@ void processInput(GLFWwindow* window);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
-unsigned int SCR_WIDTH = 800;
-unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 1920;
+unsigned int SCR_HEIGHT = 1080;
 float fov = 60.0f;
 Camera camera;
 
@@ -79,7 +79,7 @@ int main()
         return -1;
     }
 
-    glfwSetWindowPos(window, 560, 240);
+    glfwSetWindowPos(window, 0, 0);
 
     //makes window context current
     //----------------------------
@@ -131,7 +131,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.46f, 0.89f, 0.51f, 1.0f);
+        glClearColor(0.455f, 0.702f, 0.820f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         chunkMgr.Update_Loaded_Chunks();

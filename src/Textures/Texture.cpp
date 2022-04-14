@@ -2,7 +2,7 @@
 #include "Texture.h"
 #include <glad/glad.h>
 #include "stb_image.h"
-
+#include <stdexcept>
 
 Texture::Texture() 
 	: m_RendererID(0), m_LocalBuffer(nullptr), 
@@ -19,6 +19,10 @@ void Texture::Set_Data(const std::string& path)
 	stbi_set_flip_vertically_on_load(1);
 	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);
 
+	if (m_LocalBuffer == NULL) {
+		std::cout << stbi_failure_reason() << std::endl;
+		throw std::runtime_error(stbi_failure_reason());
+	}
 	//generating textures
 	glGenTextures(1, &m_RendererID);
 	glBindTexture(GL_TEXTURE_2D, m_RendererID);

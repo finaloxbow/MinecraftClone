@@ -611,7 +611,7 @@
     <ClInclude Include="src\Rendering\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\textures\texturelol.jpg" />
+    <Image Include="res\textures\concreteTexture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
