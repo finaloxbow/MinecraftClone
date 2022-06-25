@@ -614,6 +614,7 @@
     <ClInclude Include="src\Rendering\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\textures\arrow.jpg" />
     <Image Include="res\textures\concreteTexture.png" />
   </ItemGroup>
   <ItemGroup>

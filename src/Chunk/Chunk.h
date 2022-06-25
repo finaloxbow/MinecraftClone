@@ -81,13 +81,13 @@ const static float blockTop[] = {
 };
 
 const static float blockBottom[] = {
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,   //bottom left
+    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,   //bottom right
+    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,   //top right
 
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f,   0.0f, 1.0f,
-    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,   //bottom left
+    0.0f, 0.0f, 1.0f,   0.0f, 1.0f,   //top left
+    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,   //top right
 };
 
 const static unsigned int CHUNK_SIZE = 16;
@@ -110,7 +110,7 @@ private:
     Camera* camera;
 
     //holds whether a block is active at a certain chunk position
-    bool activeBlockList[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
+    bool*** activeBlockList;
 
     //chunk positions
     chunkPos pos;
@@ -119,14 +119,18 @@ private:
     static Noise noiseGen;
 
     //height map
-    int heightMap[CHUNK_SIZE][CHUNK_SIZE];
+    int** heightMap;
 
     //tracks which faces are to be rendered
-    int blockFaceList[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
+    int*** blockFaceList;
+
+    //keeps track of visited blocks in the greedy mesher
+    bool*** visited;
 
 public:
 
     Chunk();
+    ~Chunk();
 
     Chunk(Camera* camera, int xpos, int ypos);
     
@@ -148,7 +152,8 @@ public:
     //generates the blockk face list
     void blockFaceGenerator();
 
-    //creates greedy mesh
-    void GreedyMeshGenerator(std::vector<float> vertices);
-    void pushQuad(glm::vec3 bottomLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 bottomRight, std::vector<float> vertices);
+    //generate greedy meshes for all chunk sides
+    void GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList);
+    void GreedyMeshGeneratorBackToFront(std::vector<float>* coordsList);
+    void GreedyMeshGeneratorLeftToRight(std::vector<float>* coordsList);
 };

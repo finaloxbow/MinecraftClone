@@ -37,6 +37,12 @@ Chunk::Chunk()
             }
         }
     }
+
+    visited = NULL;
+}
+
+Chunk::~Chunk()
+{
 }
 
 
@@ -55,6 +61,30 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
 
     pos.xpos = xpos;
     pos.zpos = zpos;
+
+    //allocates mem for activeBlockList
+    activeBlockList = new bool** [CHUNK_SIZE];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        activeBlockList[i] = new bool* [CHUNK_HEIGHT];
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            activeBlockList[i][j] = new bool[CHUNK_SIZE];
+        }
+    }
+    
+    //fills activeBlockList with default "false" value
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            for (int h = 0; h < CHUNK_SIZE; h++) {
+                activeBlockList[i][j][h] = false;
+            }
+        }
+    }
+
+    //allocates mem for height map
+    heightMap = new int* [CHUNK_SIZE];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        heightMap[i] = new int[CHUNK_SIZE];
+    }
 
     //sets height map
     for (int x = 0; x < CHUNK_SIZE; x++) {
@@ -76,8 +106,28 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
             }
         }
     }
-
     
+    //inits visited 3d arr
+    visited = (bool***)malloc(CHUNK_SIZE * sizeof(bool**));
+    if (visited != NULL) {
+        for (int i = 0; i < CHUNK_SIZE; i++) {
+            visited[i] = (bool**)malloc(CHUNK_HEIGHT * sizeof(bool*));
+            if (visited[i] != NULL) {
+                for (int j = 0; j < CHUNK_HEIGHT; j++) {
+                    visited[i][j] = (bool*)malloc(CHUNK_SIZE * sizeof(bool));
+                }
+            }
+        }
+    }
+
+    //allocates mem for activeBlockList
+    blockFaceList = new int** [CHUNK_SIZE];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        blockFaceList[i] = new int* [CHUNK_HEIGHT];
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            blockFaceList[i][j] = new int[CHUNK_SIZE];
+        }
+    }
 }
 
 void Chunk::SetData() {
@@ -143,6 +193,16 @@ void Chunk::SetData() {
         }
     }
 
+
+    //================WORK IN PROGRESS: GREEDY MESHING ALGORITHM================//
+    /*std::vector<float> verts;
+    blockFaceGenerator();
+
+    GreedyMeshGeneratorBottomToTop(&verts);
+    GreedyMeshGeneratorBackToFront(&verts);
+    GreedyMeshGeneratorLeftToRight(&verts);*/
+
+
     vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
 
     //buffer layouts
@@ -173,7 +233,7 @@ void Chunk::Render()
     shader.Bind();
     va.Bind();
 
-    //We are drawing CHUNK_SIZE^3 blocks
+    //We are drawing CHUNK_SIZE^2*CHUNK_HEIGHT blocks
     glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE * VERTICES_COUNT);
 }
 
@@ -231,6 +291,10 @@ void Chunk::blockFaceGenerator()
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
+ 
+                //resets list of faces to render
+                blockFaceList[x][y][z] = 0;
+                
                 if (activeBlockList[x][y][z]) {
                     //if other block not rendered, render face
 
@@ -267,100 +331,266 @@ void Chunk::blockFaceGenerator()
     }
 }
 
-void Chunk::GreedyMeshGenerator(std::vector<float> vertices) {
-    int i, j, k, l, w, h, u, v, n, side = 0;
-    int x[3]{ 0,0,0 };
-    int q[3]{ 0,0,0 };
-    int du[3]{ 0,0,0 };
-    int dv[3]{ 0,0,0 };
+/*
+IDEAS TO MAKE CODE MORE EFFICIENT:
+    - keep the visited array as an object field instead of mallocing each frame
+    - instead of check whether block is active, check that the bottom or top face is active
+*/
+ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
+{
+    
+    //fills entire array with false entries
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            for (int h = 0; h < CHUNK_SIZE; h++) {
+                visited[i][j][h] = false;
+            }
+        }
+    }
 
-    int mask[CHUNK_SIZE*CHUNK_HEIGHT];
+    //bottom to top
+    for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
+        for (int row = 0; row < CHUNK_SIZE; row++) {
+            for (int col = 0; col < CHUNK_SIZE; col++) {
 
-    for (bool backFace = true, b = false; b != backFace; backFace = backFace && b, b = !b) {
-        for (int d = 0; d < 3; d++) {
-            u = (d + 1) % 3;
-            v = (d + 2) % 3;
+                if (activeBlockList[row][layer][col] && !visited[row][layer][col]
+                    && (((blockFaceList[row][layer][col] & BLOCK_BOTTOM) == BLOCK_BOTTOM) || ((blockFaceList[row][layer][col] & BLOCK_TOP) == BLOCK_TOP))) {
+                    int row_temp = row;
+                    int col_temp = col;
+                    bool endFlag = false;
 
-            x[0] = x[1] = x[2] = 0;
-            q[0] = q[1] = q[2] = 0;
-            q[d] = 1;
+                    //iterates right until end of chunk or visited block or inactive block reached
+                    while (row_temp < CHUNK_SIZE && !visited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
+                        row_temp++;
 
-            if (d == 0) { side = backFace ? BLOCK_RIGHT : BLOCK_LEFT; }
-            else if (d == 1) { side = backFace ? BLOCK_BOTTOM : BLOCK_TOP; }
-            else if (d == 2) { side = backFace ? BLOCK_FRONT : BLOCK_BACK; }
 
-            for (x[d] = -1; x[d] < CHUNK_SIZE;) {
-                
-                n = 0;
+                    //iterate upwards until incomplete row or end of chunk reached
+                    while (col_temp < CHUNK_SIZE) {
+                        for (int i = row; i < row_temp; i++) {
+                            //makes sure every element in rectangle is visited
 
-                for (x[v] = 0; x[v] < CHUNK_HEIGHT; x[v]++) {
-                    for (x[u] = 0; x[u] < CHUNK_SIZE; x[u]++) {
-                        
-                        int voxelFace1 = (x[d] >= 0) ? blockFaceList[x[0]][x[1]][x[2]] : 0;
-                        int voxelFace2 = (x[d] < CHUNK_SIZE - 1) ?
-                            blockFaceList[x[0] + q[0]][x[1] + q[1]][x[2] + q[2]] : 0;
-                        
-                        mask[n++] = ((voxelFace1 != 0 && voxelFace2 != 0)) ? 0
-                            : backFace ? voxelFace1 : voxelFace2;
-                    }
-                }
-
-                x[d]++;
-
-                n = 0;
-
-                for (j = 0; j < CHUNK_HEIGHT; j++) {
-                    for (i = 0; i < CHUNK_SIZE;) {
-                        if (mask[n] != 0) {
-                            for(w = 1; i + w < CHUNK_SIZE && mask[n + w] != 0 &&
-                                mask[n+w] == mask[n]; w++){ }
-
-                            bool done = false;
-
-                            for (h = 1; j + h < CHUNK_HEIGHT; h++) {
-                                for (k = 0; k < w; k++) {
-                                    if (mask[n + k + h * CHUNK_SIZE] == 0 ||
-                                        mask[n + k + h * CHUNK_SIZE] != mask[n])
-                                        done = true;
-                                }
-
-                                if (done)
-                                    break;
+                            //end if already visited or inactive block
+                            if (visited[i][layer][col_temp] || !activeBlockList[i][layer][col_temp]) {
+                                endFlag = true;
                             }
 
-                            //render quad
+                            visited[i][layer][col_temp] = true;
 
-                            pushQuad(
-                                glm::vec3(x[0], x[1], x[2]),
-                                glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]),
-                                glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]),
-                                glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]),
-                                vertices
-                            );
-                            
-
-                            for (l = 0; l < h; ++l) {
-                                for (k = 0; k < w; ++k) {
-                                    mask[n + k + l * CHUNK_SIZE] = 0;
-                                }
-                            }
-
-                            i += w;
-                            n += w;
+                            if (endFlag)
+                                break;
                         }
-                        else {
-                            i++;
-                            n++;
-                        }
+
+
+                        if (endFlag)
+                            break;
+
+                        col_temp++;
                     }
+
+
+
+                    //vertices and texture mappings
+                    float vertices[] = {
+                        row, 0, col,                        0, 0,                                          //bottom left
+                        row_temp, 0, col,                   row_temp - row, 0,                        //bottom right
+                        row_temp, 0, col_temp,              row_temp - row, col_temp - col,      //top right
+                        row, 0, col,                        0, 0,                                          //bottom left
+                        row, 0, col_temp,                   0, col_temp - col,                        //top left
+                        row_temp, 0, col_temp,              row_temp - row, col_temp - col       //top right
+                    };
+
+                    float newArr[30] = { 0 };
+
+                    //translates block faces to their correct positions
+                    for (int i = 0; i < 30; i += 5) {
+
+                        //block positions translated
+                        newArr[i] = vertices[i] + pos.xpos;
+                        newArr[i + 1] = vertices[i + 1] + layer;
+                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
+
+                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
+                        newArr[i + 3] = vertices[i + 3];
+                        newArr[i + 4] = vertices[i + 4];
+                    }
+
+                    for (int i = 0; i < 30; i++)
+                        coordsList->push_back(newArr[i]);
+
                 }
             }
         }
     }
 }
 
-void Chunk::pushQuad(glm::vec3 bottomLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 bottomRight,
-    std::vector<float> vertices) {
+void Chunk::GreedyMeshGeneratorBackToFront(std::vector<float>* coordsList)
+{
+
+    //fills entire array with false entries
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            for (int h = 0; h < CHUNK_SIZE; h++) {
+                visited[i][j][h] = false;
+            }
+        }
+    }
+
+    //left to right
+    for (int col = 0; col < CHUNK_SIZE; col++) {
+        for (int row = 0; row < CHUNK_SIZE; row++) {
+            for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
+                if (activeBlockList[row][layer][col] && !visited[row][layer][col]
+                    && (((blockFaceList[row][layer][col] & BLOCK_BACK) == BLOCK_BACK) || ((blockFaceList[row][layer][col] & BLOCK_FRONT) == BLOCK_FRONT))) {
+                    int row_temp = row;
+                    int layer_temp = layer;
+                    bool endFlag = false;
+
+                    //iterates right until end of chunk or visited block or inactive block reached
+                    while (row_temp < CHUNK_SIZE && !visited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
+                        row_temp++;
+
+
+                    //iterate upwards until incomplete row or end of chunk reached
+                    while (layer_temp < CHUNK_HEIGHT) {
+                        for (int i = row; i < row_temp; i++) {
+                            //makes sure every element in rectangle is visited
+
+                            //end if already visited or inactive block
+                            if (visited[i][layer_temp][col] || !activeBlockList[i][layer_temp][col]) {
+                                endFlag = true;
+                            }
+
+                            visited[i][layer_temp][col] = true;
+
+                            if (endFlag)
+                                break;
+                        }
+
+
+                        if (endFlag)
+                            break;
+
+                        layer_temp++;
+                    }
+
+
+
+                    //vertices and texture mappings
+                    float vertices[] = {
+                        row, layer, 0,                        0, 0,                                          //bottom left
+                        row_temp, layer, 0,                   row_temp - row, 0,                        //bottom right
+                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer,      //top right
+                        row, layer, 0,                        0, 0,                                          //bottom left
+                        row, layer_temp, 0,                   0, layer_temp - layer,                        //top left
+                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer       //top right
+                    };
+
+                    float newArr[30] = { 0 };
+
+                    //translates block faces to their correct positions
+                    for (int i = 0; i < 30; i += 5) {
+
+                        /*newArr[i] = arr[i] + x + pos.xpos;
+                       newArr[i + 1] = arr[i + 1] + y;
+                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
+
+                        //block positions translated
+                        newArr[i] = vertices[i] + pos.xpos;
+                        newArr[i + 1] = vertices[i + 1];
+                        newArr[i + 2] = vertices[i + 2] + col + pos.zpos;
+
+                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
+                        newArr[i + 3] = vertices[i + 3];
+                        newArr[i + 4] = vertices[i + 4];
+                    }
+
+                    for (int i = 0; i < 30; i++)
+                        coordsList->push_back(newArr[i]);
+
+                }
+            }
+        }
+    }
+}
+
+void Chunk::GreedyMeshGeneratorLeftToRight(std::vector<float>* coordsList)
+{
+    //fills entire array with false entries
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_HEIGHT; j++) {
+            for (int h = 0; h < CHUNK_SIZE; h++) {
+                visited[i][j][h] = false;
+            }
+        }
+    }
+
+    for (int row = 0; row < CHUNK_SIZE; row++) {
+        for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
+            for (int col = 0; col < CHUNK_SIZE; col++) {
+                if (activeBlockList[row][layer][col] && !visited[row][layer][col]
+                    && (((blockFaceList[row][layer][col] & BLOCK_LEFT) == BLOCK_LEFT) || ((blockFaceList[row][layer][col] & BLOCK_RIGHT) == BLOCK_RIGHT))) {
+                    int layer_temp = layer;
+                    int col_temp = col;
+                    bool endFlag = false;
+
+                    while (layer_temp < CHUNK_HEIGHT && !visited[row][layer_temp][col] && activeBlockList[row][layer_temp][col])
+                        layer_temp++;
+
+                    while (col_temp < CHUNK_SIZE) {
+                        for (int i = layer; i < layer_temp; i++) {
+
+                            if (visited[row][i][col_temp] || !activeBlockList[row][i][col_temp]) {
+                                endFlag = true;
+                            }
+
+                            visited[row][i][col_temp] = true;
+
+                            if (endFlag)
+                                break;
+                        }
+
+                        if (endFlag)
+                            break;
+
+                        col_temp++;
+                    }
+
+                    //vertices and texture mappings
+                    float vertices[] = {
+                        0, layer, col,                        0, 0,                                          //bottom left
+                        0, layer_temp, col,                   layer_temp - layer, 0,                        //bottom right
+                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col,      //top right
+                        0, layer, col,                        0, 0,                                          //bottom left
+                        0, layer, col_temp,                   0, col_temp - col,                        //top left
+                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col       //top right
+                    };
+
+                    float newArr[30] = { 0 };
+
+                    //translates block faces to their correct positions
+                    for (int i = 0; i < 30; i += 5) {
+
+                        /*newArr[i] = arr[i] + x + pos.xpos;
+                       newArr[i + 1] = arr[i + 1] + y;
+                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
+
+                       //block positions translated
+                        newArr[i] = vertices[i] + row + pos.xpos;
+                        newArr[i + 1] = vertices[i + 1];
+                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
+
+                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
+                        newArr[i + 3] = vertices[i + 3];
+                        newArr[i + 4] = vertices[i + 4];
+                    }
+
+                    for (int i = 0; i < 30; i++)
+                        coordsList->push_back(newArr[i]);
+
+                }
+            }
+        }
+    }
 
 }
 

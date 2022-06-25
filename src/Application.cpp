@@ -112,7 +112,11 @@ int main()
 
     //rendering done here
     //-------------------
+    //Chunk testChunk(&camera, 0, 0);
     ChunkManager chunkMgr(&camera);
+
+    //-------turns on wireframe mode
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     
     // render loop
@@ -134,6 +138,11 @@ int main()
         glClearColor(0.455f, 0.702f, 0.820f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        /*testChunk.Render();
+        testChunk.SetData();*/
+        
+
+
         chunkMgr.Update_Loaded_Chunks();
         chunkMgr.Render_Chunks();
 

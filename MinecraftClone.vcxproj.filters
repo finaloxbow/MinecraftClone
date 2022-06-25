@@ -1402,6 +1402,9 @@
     <Image Include="res\textures\concreteTexture.png">
       <Filter>res</Filter>
     </Image>
+    <Image Include="res\textures\arrow.jpg">
+      <Filter>res</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Library Include="src\vendor\GLFW\glfw3.lib" />
