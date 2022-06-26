@@ -125,7 +125,8 @@ private:
     int*** blockFaceList;
 
     //keeps track of visited blocks in the greedy mesher
-    bool*** visited;
+    bool*** firstVisited;
+    bool*** secondVisited;
 
 public:
 
@@ -156,4 +157,6 @@ public:
     void GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList);
     void GreedyMeshGeneratorBackToFront(std::vector<float>* coordsList);
     void GreedyMeshGeneratorLeftToRight(std::vector<float>* coordsList);
+
+    void testGreedyMeshGen(std::vector<float>* coordsList);
 };
