@@ -118,6 +118,8 @@ int main()
     //-------turns on wireframe mode
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    int numCount = 1;
+    int total = 0;
     
     // render loop
     // -----------
@@ -127,7 +129,11 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         
         camera.calc_time(currentFrame);
-        std::cout << "FPS: " << 1 / (camera.getFrameTime()) << std::endl;
+        float fps = 1 / (camera.getFrameTime());
+        std::cout << "FPS: " << fps << std::endl;
+
+        total += fps;
+        numCount++;
 
         // input
         // -----
@@ -156,6 +162,8 @@ int main()
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     
+    printf("Avg: %f\n", (float)total / numCount);
+
 
     glfwTerminate();
     return 0;

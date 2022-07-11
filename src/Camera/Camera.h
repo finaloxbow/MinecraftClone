@@ -24,6 +24,9 @@ private:
 	static float deltaTime;
 	static float lastFrame;
 
+	static const int SCR_HEIGHT = 1080;
+	static const int SCR_WIDTH = 1920;
+
 public:
 
 

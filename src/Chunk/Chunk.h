@@ -91,7 +91,7 @@ const static float blockBottom[] = {
 };
 
 const static unsigned int CHUNK_SIZE = 16;
-const static unsigned int CHUNK_HEIGHT = 64;
+const static unsigned int CHUNK_HEIGHT = 128;
 
 class Chunk {
 private:
@@ -128,6 +128,12 @@ private:
     bool*** firstVisited;
     bool*** secondVisited;
 
+    //cached rendering buffer
+    std::vector<float> verts;
+
+    //boolean that tests whether chunk has been updated
+    bool chunkHasUpdated;
+
 public:
 
     Chunk();
@@ -152,6 +158,12 @@ public:
 
     //generates the blockk face list
     void blockFaceGenerator();
+
+    //helper function for rendering in SetData()
+    void setRendering();
+
+    //returns whether chunk has been updated
+    bool chunkUpdated();
 
     //generate greedy meshes for all chunk sides
     void GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList);

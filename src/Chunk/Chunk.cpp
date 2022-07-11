@@ -141,82 +141,39 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
             blockFaceList[i][j] = new int[CHUNK_SIZE];
         }
     }
+
+    chunkHasUpdated = true;
+    //reserves verts per quad * quads per cube * cubes per chunk
+    // currently ~ 11 MB
+    /*long capacity = 30 * 6 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
+    verts.reserve(capacity);*/
 }
 
 void Chunk::SetData() {
 
-    //rendering starting info
-    //std::vector<float> verts;
-    //float tempArr[30];
-    //
-    ////generates which block faces to render
-    //blockFaceGenerator();
-    //
-    ////precompile all necessary vertex data for a 
-    ////single flat chunk into a single vector
-    //for (int x = 0; x < CHUNK_SIZE; x++) {
-    //    for (int y = 0; y < CHUNK_HEIGHT; y++) {
-    //        for (int z = 0; z < CHUNK_SIZE; z++) {
-    //            if (activeBlockList[x][y][z]) {
-    //                int faceData = blockFaceList[x][y][z];
-    //
-    //                //right
-    //                if ((faceData & BLOCK_RIGHT) == BLOCK_RIGHT) {
-    //                    transFace(blockRight, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //
-    //                //left
-    //                if ((faceData & BLOCK_LEFT) == BLOCK_LEFT) {
-    //                    transFace(blockLeft, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //
-    //                //back
-    //                if ((faceData & BLOCK_BACK) == BLOCK_BACK) {
-    //                    transFace(blockBack, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //
-    //                //front
-    //                if ((faceData & BLOCK_FRONT) == BLOCK_FRONT) {
-    //                    transFace(blockFront, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //
-    //                //top
-    //                if ((faceData & BLOCK_TOP) == BLOCK_TOP) {
-    //                    transFace(blockTop, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //
-    //                //bottom
-    //                if ((faceData & BLOCK_BOTTOM) == BLOCK_BOTTOM) {
-    //                    transFace(blockBottom, tempArr, 30, x, y, z);
-    //                    for (int i = 0; i < 30; i++)
-    //                        verts.push_back(tempArr[i]);
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    
 
 
     //================WORK IN PROGRESS: GREEDY MESHING ALGORITHM================//
-    std::vector<float> verts;
-    blockFaceGenerator();
     
-    //testGreedyMeshGen(&verts);
+    verts.clear();
+    //blockFaceGenerator();
+    
     
     GreedyMeshGeneratorBottomToTop(&verts);
     GreedyMeshGeneratorBackToFront(&verts);
     GreedyMeshGeneratorLeftToRight(&verts);
 
+    chunkHasUpdated = false;
+
+}
+
+void Chunk::setRendering() {
+
+    if (chunkHasUpdated) {
+        SetData();
+        chunkHasUpdated = false;
+    }
 
     vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
 
@@ -229,176 +186,12 @@ void Chunk::SetData() {
     //loads texture and binds it to texture slot 0
     texture.Bind();
     shader.SetUniform1i("u_Texture", 0);
-
 }
 
-void Chunk::testGreedyMeshGen(std::vector<float>* coordsList){
-    
-    bool activeBlocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE] = { 0 };
-
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int h = 0; h < CHUNK_SIZE; h++) {
-                activeBlocks[i][j][h] = true;
-            }
-        }
-    }
-
-    activeBlocks[0][0][0] = false;
-    
-    
-    //fills entire array with false entries
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int h = 0; h < CHUNK_SIZE; h++) {
-                firstVisited[i][j][h] = false;
-            }
-        }
-    }
-
-    
-    int row = 0;
-        for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
-            for (int col = 0; col < CHUNK_SIZE; col++) {
-
-                //LEFT LAYER
-                if (activeBlocks[row][layer][col] && !firstVisited[row][layer][col]
-                    ) {
-                    int layer_temp = layer;
-                    int col_temp = col;
-                    bool endFlag = false;
-
-                    while (layer_temp < CHUNK_HEIGHT && !firstVisited[row][layer_temp][col] && activeBlocks[row][layer_temp][col])
-                        layer_temp++;
-
-                    while (col_temp < CHUNK_SIZE) {
-                        for (int i = layer; i < layer_temp; i++) {
-
-                            if (firstVisited[row][i][col_temp] || !activeBlocks[row][i][col_temp]) {
-                                endFlag = true;
-                            }
-
-
-
-                            if (endFlag)
-                                break;
-                            else {
-                                for (int i = layer; i < layer_temp; i++)
-                                    firstVisited[row][i][col_temp] = true;
-                            }
-                        }
-
-                        if (endFlag)
-                            break;
-
-                        col_temp++;
-                    }
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer_temp, col,                   layer_temp - layer, 0,                        //bottom right
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col,      //top right
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer, col_temp,                   0, col_temp - col,                        //top left
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                       //block positions translated
-                        newArr[i] = vertices[i] + row + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-
-                //RIGHT LAYER
-                if (activeBlocks[row][layer][col] && !secondVisited[row][layer][col]
-                    ) {
-                    int layer_temp = layer;
-                    int col_temp = col;
-                    bool endFlag = false;
-
-                    while (layer_temp < CHUNK_HEIGHT && !secondVisited[row][layer_temp][col] && activeBlocks[row][layer_temp][col])
-                        layer_temp++;
-
-                    while (col_temp < CHUNK_SIZE) {
-                        for (int i = layer; i < layer_temp; i++) {
-
-                            if (secondVisited[row][i][col_temp] || !activeBlocks[row][i][col_temp]) {
-                                endFlag = true;
-                            }
-
-
-
-                            if (endFlag)
-                                break;
-                        }
-
-                        if (endFlag)
-                            break;
-                        else {
-                            for (int i = layer; i < layer_temp; i++) {
-                                secondVisited[row][i][col_temp] = true;
-                            }
-                        }
-
-                        col_temp++;
-                    }
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer_temp, col,                   layer_temp - layer, 0,                        //bottom right
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col,      //top right
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer, col_temp,                   0, col_temp - col,                        //top left
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                       //block positions translated
-                        newArr[i] = vertices[i] + row + 1 + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-            }
-        }
+bool Chunk::chunkUpdated()
+{
+    return chunkHasUpdated;
 }
-
 
 void Chunk::Render()
 {
@@ -412,19 +205,22 @@ void Chunk::Render()
     shader.SetUniformMat4f("u_MVP", MVP);
 
     
-    shader.Bind();
+    //shader.Bind();
     va.Bind();
 
     //We are drawing CHUNK_SIZE^2*CHUNK_HEIGHT blocks
-    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE * VERTICES_COUNT);
+    glDrawArrays(GL_TRIANGLES, 0, verts.size() / 5);
 }
 
 //updates whether a block is being rendered
 void Chunk::UpdateBlock(int xpos, int ypos, int zpos, bool isActive)
 {
+
+
     activeBlockList[xpos][ypos][zpos] = isActive;
-    
-    this->SetData();
+    chunkHasUpdated = true;
+
+    //this->SetData();
 }
 
 bool Chunk::isActive(int xpos, int ypos, int zpos)
