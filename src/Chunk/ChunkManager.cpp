@@ -3,7 +3,6 @@
 /*@TODO:
 	- fix chunk rendering around camera position
 */
-static int radius = 16 * CHUNK_SIZE;
 
 ChunkManager::ChunkManager(Camera* camera)
 	: camera(camera)
@@ -15,7 +14,7 @@ ChunkManager::ChunkManager(Camera* camera)
 	chunkList.insert({ glm::vec2(-1, -1), new Chunk(camera, -1, -1)});
 	
 	for (auto& iter : chunkList) {
-		iter.second->setRendering();
+		iter.second->setData();
 		loadedChunks.insert({ iter.first, iter.second});
 	}
 
@@ -24,7 +23,7 @@ ChunkManager::ChunkManager(Camera* camera)
 void ChunkManager::Render_Chunks()
 {
 	for (auto& iter: loadedChunks) {
-		iter.second->Render();
+		iter.second->render();
 	}
 }
 
@@ -63,7 +62,7 @@ void ChunkManager::Update_Loaded_Chunks()
 					//inserts new chunk into each chunk list and sets its data
 					chunkList.insert({ glm::vec2{i , j}, new Chunk(camera, i, j)});
 					loadedChunks.insert({ {glm::vec2{i, j}, chunkList.find({i,j})->second} });
-					loadedChunks.find(glm::vec2{ i,j })->second->setRendering();
+					loadedChunks.find(glm::vec2{ i,j })->second->setData();
 				}
 			}
 		}

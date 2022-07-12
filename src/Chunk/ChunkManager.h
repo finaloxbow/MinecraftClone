@@ -15,6 +15,8 @@ private:
 	std::unordered_map<glm::vec2, Chunk*> loadedChunks;
 	Camera* camera;
 
+	const static int radius = 16 * CHUNK_SIZE;
+
 public:
 
 	ChunkManager(Camera *camera);

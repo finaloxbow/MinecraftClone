@@ -1,317 +1,164 @@
 #include "Chunk.h"
 
-//static vars
+//static vars init
 VertexBufferLayout Chunk::layout;
 Shader Chunk::shader;
 Texture Chunk::texture;
-bool Chunk::staticInit = false;
 Noise Chunk::noiseGen;
+bool Chunk::staticInit = false;
 
-Chunk::Chunk()
-{
-    pos.xpos = 0;
-    pos.zpos = 0;
-    camera = nullptr;
+Chunk::Chunk(Camera* cameraIn, int xpos, int ypos) {
+	
+	camera = cameraIn;
+	chunkPos = { xpos, ypos};
 
-    //sets activeBlockList to all true
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
-                activeBlockList[x][y][z] = false;
-            }
-        }
-    }
+	//initializes shader, texture, and layout for all chunks
+	if (!staticInit) {
+		layout.Push<float>(3);
+		layout.Push<float>(2);
 
-    //sets height map to all 0
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int z = 0; z < CHUNK_SIZE; z++) {
-            heightMap[x][z] = 0;
-        }
-    }
+		shader.Set_Data("res/shaders/Basic.shader");
+		texture.Set_Data("res/textures/concreteTexture.png");
 
-    //sets block face list to 0
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int k = 0; k < CHUNK_SIZE; k++) {
-                blockFaceList[i][j][k] = 0;
-            }
-        }
-    }
+		staticInit = true;
+	}
 
-    firstVisited = NULL;
-    secondVisited = NULL;
-}
+	//init blockData 3d array
+	blockData = new unsigned short** [CHUNK_SIZE];
+	for (int i = 0; i < CHUNK_SIZE; i++) {
+		blockData[i] = new unsigned short* [CHUNK_HEIGHT];
+		for (int j = 0; j < CHUNK_HEIGHT; j++) {
+			blockData[i][j] = new unsigned short[CHUNK_SIZE];
+			for (int k = 0; k < CHUNK_SIZE; k++) {
+				blockData[i][j][k] = 0;
+			}
+		}
+	}
 
-Chunk::~Chunk()
-{
-}
+	//initialize blockData
+	//for (int x = 0; x < CHUNK_SIZE; x++) {
+	//	for (int z = 0; z < CHUNK_SIZE; z++) {
+	//		//chunk coords
+	//		int xpos = chunkPos.x;
+	//		int zpos = chunkPos.y;
+	//		int height = heightMapGenerator(x, z, xpos, zpos);
 
+	//		//heights of surrounding 4 columns around block
+	//		int heightRight = heightMapGenerator(x + 1, z, xpos, zpos);
+	//		int heightLeft = heightMapGenerator(x - 1, z, xpos, zpos);
+	//		int heightFront = heightMapGenerator(x, z + 1, xpos, zpos);
+	//		int heightBack = heightMapGenerator(x, z - 1, xpos, zpos);
 
-Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
-    : camera(cameraIn)
-{
-    if (!staticInit) {
-        layout.Push<float>(3);
-        layout.Push<float>(2);
-
-        shader.Set_Data("res/shaders/Basic.shader");
-        texture.Set_Data("res/textures/concreteTexture.png");
-
-        staticInit = true;
-    }
-
-    pos.xpos = xpos;
-    pos.zpos = zpos;
-
-    //allocates mem for activeBlockList
-    activeBlockList = new bool** [CHUNK_SIZE];
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        activeBlockList[i] = new bool* [CHUNK_HEIGHT];
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            activeBlockList[i][j] = new bool[CHUNK_SIZE];
-        }
-    }
+	//		//TODO: set block faces
+	//		for(int y = 0; y < height; y++){
+	//			if (x == 0 || y <= heightLeft)
+	//				blockData[x][y][z] |= BLOCK_LEFT;
+	//			if (x < CHUNK_SIZE || y <= heightRight)
+	//				blockData[x][y][z] |= BLOCK_RIGHT;
+	//			if (z == 0 || z <= heightBack)
+	//				blockData[x][y][z] |= BLOCK_BACK;
+	//			if (z < CHUNK_SIZE || z <= heightFront)
+	//				blockData[x][y][z] |= BLOCK_FRONT;
+	//			if (y > 0 && blockData[x][y - 1][z] == 0)
+	//				blockData[x][y][z] |= BLOCK_BOTTOM;
+	//			if (y < CHUNK_HEIGHT - 1 && blockData[x][y + 1][z] == 0)
+	//				blockData[x][y][z] |= BLOCK_TOP;
+	//		}
+	//	}
+	//}
     
-    //fills activeBlockList with default "false" value
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int h = 0; h < CHUNK_SIZE; h++) {
-                activeBlockList[i][j][h] = false;
-            }
-        }
-    }
-
-    //allocates mem for height map
-    heightMap = new int* [CHUNK_SIZE];
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        heightMap[i] = new int[CHUNK_SIZE];
-    }
-
-    //sets height map
+    //init activeBlockList bit based on height map
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
-            //heightMap[x][z] = (int)((CHUNK_HEIGHT - 2) / 2) * (noiseGen.getNoise(pos.xpos + x, pos.zpos + z) + 1) + 1;
-            heightMap[x][z] = heightMapGenerator(pos.xpos, pos.zpos, x, z);
-        }
-    }
+            int xpos = chunkPos.x;
+            int zpos = chunkPos.y;
+            int height = heightMapGenerator(x, z, xpos, zpos);
 
-    //fill activeBlockList with initial values
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int z = 0; z < CHUNK_SIZE; z++) {
-            
-            //within range [1, CHUNK_SIZE - 1]
-            int height = heightMap[x][z];
-            
             for (int y = 0; y < height; y++) {
-                activeBlockList[x][y][z] = true;
-            }
-        }
-    }
-    
-    //inits first visited 3d arr
-    firstVisited = (bool***)malloc(CHUNK_SIZE * sizeof(bool**));
-    if (firstVisited != NULL) {
-        for (int i = 0; i < CHUNK_SIZE; i++) {
-            firstVisited[i] = (bool**)malloc(CHUNK_HEIGHT * sizeof(bool*));
-            if (firstVisited[i] != NULL) {
-                for (int j = 0; j < CHUNK_HEIGHT; j++) {
-                    firstVisited[i][j] = (bool*)malloc(CHUNK_SIZE * sizeof(bool));
-                }
-            }
-        }
-    }
-    //inits second visited 3d arr
-    secondVisited = (bool***)malloc(CHUNK_SIZE * sizeof(bool**));
-    if (secondVisited != NULL) {
-        for (int i = 0; i < CHUNK_SIZE; i++) {
-            secondVisited[i] = (bool**)malloc(CHUNK_HEIGHT * sizeof(bool*));
-            if (secondVisited[i] != NULL) {
-                for (int j = 0; j < CHUNK_HEIGHT; j++) {
-                    secondVisited[i][j] = (bool*)malloc(CHUNK_SIZE * sizeof(bool));
-                }
+                //sets blocks up to height as active
+                blockData[x][y][z] |= IS_ACTIVE;
             }
         }
     }
 
-    //allocates mem for activeBlockList
-    blockFaceList = new int** [CHUNK_SIZE];
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        blockFaceList[i] = new int* [CHUNK_HEIGHT];
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            blockFaceList[i][j] = new int[CHUNK_SIZE];
-        }
-    }
-
-    chunkHasUpdated = true;
-}
-
-void Chunk::SetData() {
-    verts.clear();
-    
-    
-    GreedyMeshGeneratorBottomToTop(&verts);
-    GreedyMeshGeneratorBackToFront(&verts);
-    GreedyMeshGeneratorLeftToRight(&verts);
-
-    chunkHasUpdated = false;
-
-}
-
-void Chunk::setRendering() {
-
-    if (chunkHasUpdated) {
-        SetData();
-        chunkHasUpdated = false;
-    }
-
-    vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
-
-    //buffer layouts
-    va.AddBuffer(vb, layout);
-
-    //creates and starts program
-    shader.Bind();
-
-    //loads texture and binds it to texture slot 0
-    texture.Bind();
-    shader.SetUniform1i("u_Texture", 0);
-}
-
-bool Chunk::chunkUpdated()
-{
-    return chunkHasUpdated;
-}
-
-void Chunk::Render()
-{
-    //abstracted camera into separate class
-    glm::mat4 proj = camera->getPerspectiveMatrix();
-    glm::mat4 view = camera->getViewMatrix();
-    glm::mat4 model = glm::mat4(1.0f);
-
-    glm::mat4 MVP = proj * view * model;
-    //model view projection matrix sent to shader
-    shader.SetUniformMat4f("u_MVP", MVP);
-
-    
-    //shader.Bind();
-    va.Bind();
-
-    //We are drawing CHUNK_SIZE^2*CHUNK_HEIGHT blocks
-    glDrawArrays(GL_TRIANGLES, 0, verts.size() / 5);
-}
-
-//updates whether a block is being rendered
-void Chunk::UpdateBlock(int xpos, int ypos, int zpos, bool isActive)
-{
-
-
-    activeBlockList[xpos][ypos][zpos] = isActive;
-    chunkHasUpdated = true;
-
-    //this->SetData();
-}
-
-bool Chunk::isActive(int xpos, int ypos, int zpos)
-{
-	return activeBlockList[xpos][ypos][zpos];
-}
-
-//translates elements of arr are put into newArr
-//specifically designed for the static block vertices arrays
-void Chunk::transFace(const float arr[], float newArr[], int size, int x, int y, int z)
-{
-    for (int i = 0; i < size; i += 5) {
-        //block positions translated
-        newArr[i] = arr[i] + x + pos.xpos;
-        newArr[i+1] = arr[i+1] + y;
-        newArr[i + 2] = arr[i + 2] + z + pos.zpos;
-
-        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-        newArr[i + 3] = arr[i + 3];
-        newArr[i + 4] = arr[i + 4];
-    }
-}
-
-int Chunk::heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ) {
-    
-    //-1.5 to 1.5
-    float elev = (noiseGen.getNoise(xpos + chunkX, zpos + chunkZ)
-            + 0.5 * noiseGen.getNoise(2*(xpos + chunkX),2*( zpos + chunkZ))
-            + 0.25 * noiseGen.getNoise(4*(xpos + chunkX),4*(zpos + chunkZ)));
-    //-1 to 1
-    elev /= 1.75;
-    //0 to 2
-    elev += 1;
-
-    //0 to 1
-    elev /= 2;
-
-    //0 to 1
-    elev = elev * elev * elev;
-
-    return (int)(((CHUNK_HEIGHT - 2)) * elev) + 1;
-}
-
-void Chunk::blockFaceGenerator()
-{
+    //generate face data
     for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
- 
-                //resets list of faces to render
-                blockFaceList[x][y][z] = 0;
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            int xpos = chunkPos.x;
+            int zpos = chunkPos.y;
+            int height = heightMapGenerator(x, z, xpos, zpos);
+
+            for (int y = 0; y < height; y++) {
+                //blockData[x][y][z] & IS_ACTIVE != 0
                 
-                if (activeBlockList[x][y][z]) {
-                    //if other block not rendered, render face
-
-                    /*@TODO: check whether block to side is active
-                                - if so, do not render current block*/
-
-                    if ((x > 0 && !activeBlockList[x - 1][y][z]) || x == 0) {
-                        //render right
-                        blockFaceList[x][y][z] += BLOCK_RIGHT;
-                    }
-                    if ((x < CHUNK_SIZE - 1 && !activeBlockList[x + 1][y][z]) || x == CHUNK_SIZE - 1) {
-                        //render left
-                        blockFaceList[x][y][z] += BLOCK_LEFT;
-                    }
-                    if ((y > 0 && !activeBlockList[x][y - 1][z]) || y == 0) {
-                        //render bottom
-                        blockFaceList[x][y][z] += BLOCK_BOTTOM;
-                    }
-                    if ((y < CHUNK_HEIGHT - 1 && !activeBlockList[x][y + 1][z]) || y == CHUNK_HEIGHT - 1) {
-                        //render top
-                        blockFaceList[x][y][z] += BLOCK_TOP;
-                    }
-                    if ((z > 0 && !activeBlockList[x][y][z - 1]) || z == 0) {
-                        //render front
-                        blockFaceList[x][y][z] += BLOCK_FRONT;
-                    }
-                    if ((z < CHUNK_SIZE - 1 && !activeBlockList[x][y][z + 1]) || z == CHUNK_SIZE - 1) {
-                        //render back
-                        blockFaceList[x][y][z] += BLOCK_BACK;
-                    }
-                }
+                //bottom face
+                if (y == 0 || (blockData[x][y - 1][z] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_BOTTOM;
+                //top face
+                if (y < CHUNK_HEIGHT - 1 && (blockData[x][y + 1][z] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_TOP;
+                //left face (-x)
+                if (x == 0 || (blockData[x - 1][y][z] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_LEFT;
+                //right face (+x)
+                if (x < CHUNK_SIZE - 1 && (blockData[x + 1][y][z] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_RIGHT;
+                //back face (-z)
+                if (z == 0 || (blockData[x][y][z - 1] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_BACK;
+                //front face (+z)
+                if (z < CHUNK_SIZE - 1 && (blockData[x][y][z + 1] & IS_ACTIVE) == 0)
+                    blockData[x][y][z] |= BLOCK_FRONT;
             }
         }
     }
+
+
 }
 
-/*
-IDEAS TO MAKE CODE MORE EFFICIENT:
-    - make it so inner layers are not rendered if the block is not active
-    - make it so the mesher actually WORKS!!!
-*/
-void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
-{
+Chunk::~Chunk() {
+	//free blockData
+}
+
+void Chunk::setData() {
+	verts.clear();
+
+	generateMesh(&verts);
+
+	//sets the buffer data
+	vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
+
+	//sets buffer layout with buffer
+	va.AddBuffer(vb, layout);
+
+	//creates and starts shader program
+	shader.Bind();
+
+	//loads texture and binds to slot 0
+	texture.Bind();
+	shader.SetUniform1i("u_Texture", 0);
+	shader.SetUniform1i("u_Texture", 0);
+}
+
+void Chunk::generateMesh(std::vector<float>* coordsList) {
+	
+    //meshing helper functions
+    greedyMesherBottomToTop(coordsList);
+    greedyMesherBackToFront(coordsList);
+    greedyMesherLeftToRight(coordsList);
+}
+
+void Chunk::greedyMesherBottomToTop(std::vector<float>* coordsList){
+    int chunkX = chunkPos.x;
+    int chunkZ = chunkPos.y;
 
     //fills entire array with false entries
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_HEIGHT; j++) {
             for (int h = 0; h < CHUNK_SIZE; h++) {
-                firstVisited[i][j][h] = false;
-                secondVisited[i][j][h] = false;
+                //sets visited bits to 0
+                blockData[i][j][h] &= ~(FIRST_VISITED + 0xff00);
+                blockData[i][j][h] &= ~(SECOND_VISITED + 0xff00);
             }
         }
     }
@@ -320,15 +167,18 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
         for (int row = 0; row < CHUNK_SIZE; row++) {
             for (int col = 0; col < CHUNK_SIZE; col++) {
 
-
+                // activeblocklist => (blockData & BLOCK_BOTTOM) != 0
+                // !firstVisited => (blockData & FIRST_VISITED) == 0
+                // 
                 //BOTTOM LAYER
-                if (activeBlockList[row][layer][col] && !firstVisited[row][layer][col]) {
+                if ((blockData[row][layer][col] & BLOCK_BOTTOM) != 0 && (blockData[row][layer][col] & FIRST_VISITED) == 0) {
                     int row_temp = row;
                     int col_temp = col;
                     bool endFlag = false;
 
                     //iterates right until end of chunk or visited block or inactive block reached
-                    while (row_temp < CHUNK_SIZE && !firstVisited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
+                    while (row_temp < CHUNK_SIZE && (blockData[row_temp][layer][col] & FIRST_VISITED) == 0
+                        && (blockData[row_temp][layer][col] & BLOCK_BOTTOM) != 0)
                         row_temp++;
 
 
@@ -338,7 +188,7 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                             //makes sure every element in rectangle is visited
 
                             //end if already visited or inactive block
-                            if (firstVisited[i][layer][col_temp] || !activeBlockList[i][layer][col_temp]) {
+                            if ((blockData[i][layer][col_temp] & FIRST_VISITED) != 0 || (blockData[i][layer][col_temp] & BLOCK_BOTTOM) == 0) {
                                 endFlag = true;
                             }
 
@@ -352,7 +202,7 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                             break;
                         else {
                             for (int i = row; i < row_temp; i++) {
-                                firstVisited[i][layer][col_temp] = true;
+                                blockData[i][layer][col_temp] |= FIRST_VISITED;
                             }
                         }
 
@@ -377,9 +227,9 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                     for (int i = 0; i < 30; i += 5) {
 
                         //block positions translated
-                        newArr[i] = vertices[i] + pos.xpos;
+                        newArr[i] = vertices[i] + chunkX;
                         newArr[i + 1] = vertices[i + 1] + layer;
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
+                        newArr[i + 2] = vertices[i + 2] + chunkZ;
 
                         //texture coords unchanged (can probably add texture coords to separate array for efficiency)
                         newArr[i + 3] = vertices[i + 3];
@@ -390,15 +240,18 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                         coordsList->push_back(newArr[i]);
 
                 }
+
+                // activeblocklist => (blockData & BLOCK_BOTTOM) != 0
+                // !firstVisited => (blockData & FIRST_VISITED) == 0
 
                 //TOP LAYER
-                if (activeBlockList[row][layer][col] && !secondVisited[row][layer][col]) {
+                if ((blockData[row][layer][col] & BLOCK_TOP) != 0 && (blockData[row][layer][col] & SECOND_VISITED) == 0) {
                     int row_temp = row;
                     int col_temp = col;
                     bool endFlag = false;
 
                     //iterates right until end of chunk or visited block or inactive block reached
-                    while (row_temp < CHUNK_SIZE && !secondVisited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
+                    while (row_temp < CHUNK_SIZE && (blockData[row_temp][layer][col] & SECOND_VISITED) == 0 && (blockData[row_temp][layer][col] & BLOCK_TOP) != 0)
                         row_temp++;
 
 
@@ -408,7 +261,7 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                             //makes sure every element in rectangle is visited
 
                             //end if already visited or inactive block
-                            if (secondVisited[i][layer][col_temp] || !activeBlockList[i][layer][col_temp]) {
+                            if ((blockData[i][layer][col_temp] & SECOND_VISITED) != 0 || (blockData[i][layer][col_temp] & BLOCK_TOP) == 0) {
                                 endFlag = true;
                             }
 
@@ -422,7 +275,7 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                             break;
                         else {
                             for (int i = row; i < row_temp; i++) {
-                                secondVisited[i][layer][col_temp] = true;
+                                blockData[i][layer][col_temp] |= SECOND_VISITED;
                             }
                         }
 
@@ -447,9 +300,9 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
                     for (int i = 0; i < 30; i += 5) {
 
                         //block positions translated
-                        newArr[i] = vertices[i] + pos.xpos;
+                        newArr[i] = vertices[i] + chunkX;
                         newArr[i + 1] = vertices[i + 1] + layer + 1;
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
+                        newArr[i + 2] = vertices[i + 2] + chunkZ;
 
                         //texture coords unchanged (can probably add texture coords to separate array for efficiency)
                         newArr[i + 3] = vertices[i + 3];
@@ -463,339 +316,64 @@ void Chunk::GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList)
             }
         }
     }
+}
+
+void Chunk::greedyMesherLeftToRight(std::vector<float>* coordsList) {
+
+    int chunkX = chunkPos.x;
+    int chunkZ = chunkPos.y;
+
+
+}
+void Chunk::greedyMesherBackToFront(std::vector<float>* coordsList) {
 
 }
 
-void Chunk::GreedyMeshGeneratorBackToFront(std::vector<float>* coordsList)
+void Chunk::render() {
+	//sets model-view-projection matrix and sends to shader
+	//MVP = proj * view * model
+	shader.SetUniformMat4f("u_MVP",
+		camera->getPerspectiveMatrix()
+		* camera->getViewMatrix()
+		* glm::mat4(1.0f));
+
+	//binds VAO
+	va.Bind();
+
+	//draws vertices to screen
+	//num_vertices = verts.size / 5
+	glDrawArrays(GL_TRIANGLES, 0, verts.size() / 5);
+}
+
+void Chunk::updateBlock(int xpos, int ypos, int zpos, bool isActive) {
+	//update blockData and faces around it
+}
+
+bool Chunk::isActive(int xpos, int ypos, int zpos)
 {
-
-    //fills entire array with false entries
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int h = 0; h < CHUNK_SIZE; h++) {
-                firstVisited[i][j][h] = false;
-                secondVisited[i][j][h] = false;
-            }
-        }
-    }
-
-    //left to right
-    for (int col = 0; col < CHUNK_SIZE; col++) {
-        for (int row = 0; row < CHUNK_SIZE; row++) {
-            for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
-
-                //BACK LAYER
-                if (activeBlockList[row][layer][col] && !firstVisited[row][layer][col]
-                    ) {
-                    int row_temp = row;
-                    int layer_temp = layer;
-                    bool endFlag = false;
-
-                    //iterates right until end of chunk or visited block or inactive block reached
-                    while (row_temp < CHUNK_SIZE && !firstVisited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
-                        row_temp++;
-
-
-                    //iterate upwards until incomplete row or end of chunk reached
-                    while (layer_temp < CHUNK_HEIGHT) {
-                        for (int i = row; i < row_temp; i++) {
-                            //makes sure every element in rectangle is visited
-
-                            //end if already visited or inactive block
-                            if (firstVisited[i][layer_temp][col] || !activeBlockList[i][layer_temp][col]) {
-                                endFlag = true;
-                            }
-
-                            
-
-                            if (endFlag)
-                                break;
-                        }
-
-
-                        if (endFlag)
-                            break;
-                        else {
-                            for(int i = row; i < row_temp; i++)
-                                firstVisited[i][layer_temp][col] = true;
-                        }
-
-                        layer_temp++;
-                    }
-
-
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        row, layer, 0,                        0, 0,                                          //bottom left
-                        row_temp, layer, 0,                   row_temp - row, 0,                        //bottom right
-                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer,      //top right
-                        row, layer, 0,                        0, 0,                                          //bottom left
-                        row, layer_temp, 0,                   0, layer_temp - layer,                        //top left
-                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                        //block positions translated
-                        newArr[i] = vertices[i] + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + col + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-
-                //FRONT LAYER
-                if (activeBlockList[row][layer][col] && !secondVisited[row][layer][col]
-                    ) {
-                    int row_temp = row;
-                    int layer_temp = layer;
-                    bool endFlag = false;
-
-                    //iterates right until end of chunk or visited block or inactive block reached
-                    while (row_temp < CHUNK_SIZE && !secondVisited[row_temp][layer][col] && activeBlockList[row_temp][layer][col])
-                        row_temp++;
-
-
-                    //iterate upwards until incomplete row or end of chunk reached
-                    while (layer_temp < CHUNK_HEIGHT) {
-                        for (int i = row; i < row_temp; i++) {
-                            //makes sure every element in rectangle is visited
-
-                            //end if already visited or inactive block
-                            if (secondVisited[i][layer_temp][col] || !activeBlockList[i][layer_temp][col]) {
-                                endFlag = true;
-                            }
-
-                            
-
-                            if (endFlag)
-                                break;
-                        }
-
-
-                        if (endFlag)
-                            break;
-                        else {
-                            for (int i = row; i < row_temp; i++) {
-                                secondVisited[i][layer_temp][col] = true;
-                            }
-                        }
-
-                        layer_temp++;
-                    }
-
-
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        row, layer, 0,                        0, 0,                                          //bottom left
-                        row_temp, layer, 0,                   row_temp - row, 0,                        //bottom right
-                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer,      //top right
-                        row, layer, 0,                        0, 0,                                          //bottom left
-                        row, layer_temp, 0,                   0, layer_temp - layer,                        //top left
-                        row_temp, layer_temp, 0,              row_temp - row, layer_temp - layer       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                       //block positions translated
-                        newArr[i] = vertices[i] + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + col + 1 + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-
-            }
-        }
-    }
-
-
+	return false;
 }
 
-void Chunk::GreedyMeshGeneratorLeftToRight(std::vector<float>* coordsList)
-{
-    //fills entire array with false entries
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) {
-            for (int h = 0; h < CHUNK_SIZE; h++) {
-                firstVisited[i][j][h] = false;
-                secondVisited[i][j][h] = false;
-            }
-        }
-    }
+int Chunk::heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ) {
+	
+	//out of bounds noise check
+	if (xpos < 0 || xpos >= CHUNK_SIZE || zpos < 0 || zpos >= CHUNK_SIZE)
+		return 0;
 
-    for (int row = 0; row < CHUNK_SIZE; row++) {
-        for (int layer = 0; layer < CHUNK_HEIGHT; layer++) {
-            for (int col = 0; col < CHUNK_SIZE; col++) {
+	//-1.5 to 1.5
+	float elev = (noiseGen.getNoise(xpos + chunkX, zpos + chunkZ)
+		+ 0.5 * noiseGen.getNoise(2 * (xpos + chunkX), 2 * (zpos + chunkZ))
+		+ 0.25 * noiseGen.getNoise(4 * (xpos + chunkX), 4 * (zpos + chunkZ)));
+	//-1 to 1
+	elev /= 1.75;
+	//0 to 2
+	elev += 1;
 
-                //LEFT LAYER
-                if (activeBlockList[row][layer][col] && !firstVisited[row][layer][col]
-                    ) {
-                    int layer_temp = layer;
-                    int col_temp = col;
-                    bool endFlag = false;
+	//0 to 1
+	elev /= 2;
 
-                    while (layer_temp < CHUNK_HEIGHT && !firstVisited[row][layer_temp][col] && activeBlockList[row][layer_temp][col])
-                        layer_temp++;
+	//0 to 1
+	elev = elev * elev * elev;
 
-                    while (col_temp < CHUNK_SIZE) {
-                        for (int i = layer; i < layer_temp; i++) {
-
-                            if (firstVisited[row][i][col_temp] || !activeBlockList[row][i][col_temp]) {
-                                endFlag = true;
-                            }
-
-
-
-                            if (endFlag)
-                                break;
-                        }
-
-                        if (endFlag)
-                            break;
-                        else {
-                            for (int i = layer; i < layer_temp; i++) {
-                                firstVisited[row][i][col_temp] = true;
-                            }
-                        }
-
-                        col_temp++;
-                    }
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer_temp, col,                   layer_temp - layer, 0,                        //bottom right
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col,      //top right
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer, col_temp,                   0, col_temp - col,                        //top left
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                       //block positions translated
-                        newArr[i] = vertices[i] + row + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-
-                //RIGHT LAYER
-                if (activeBlockList[row][layer][col] && !secondVisited[row][layer][col]
-                    ){
-                    int layer_temp = layer;
-                    int col_temp = col;
-                    bool endFlag = false;
-
-                    while (layer_temp < CHUNK_HEIGHT && !secondVisited[row][layer_temp][col] && activeBlockList[row][layer_temp][col])
-                        layer_temp++;
-
-                    while (col_temp < CHUNK_SIZE) {
-                        for (int i = layer; i < layer_temp; i++) {
-
-                            if (secondVisited[row][i][col_temp] || !activeBlockList[row][i][col_temp]) {
-                                endFlag = true;
-                            }
-
-                            
-
-                            if (endFlag)
-                                break;
-                        }
-
-                        if (endFlag)
-                            break;
-                        else {
-                            for (int i = layer; i < layer_temp; i++) {
-                                secondVisited[row][i][col_temp] = true;
-                            }
-                        }
-
-                        col_temp++;
-                    }
-
-                    //vertices and texture mappings
-                    float vertices[] = {
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer_temp, col,                   layer_temp - layer, 0,                        //bottom right
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col,      //top right
-                        0, layer, col,                        0, 0,                                          //bottom left
-                        0, layer, col_temp,                   0, col_temp - col,                        //top left
-                        0, layer_temp, col_temp,              layer_temp - layer, col_temp - col       //top right
-                    };
-
-                    float newArr[30] = { 0 };
-
-                    //translates block faces to their correct positions
-                    for (int i = 0; i < 30; i += 5) {
-
-                        /*newArr[i] = arr[i] + x + pos.xpos;
-                       newArr[i + 1] = arr[i + 1] + y;
-                       newArr[i + 2] = arr[i + 2] + z + pos.zpos;*/
-
-                       //block positions translated
-                        newArr[i] = vertices[i] + row + 1 + pos.xpos;
-                        newArr[i + 1] = vertices[i + 1];
-                        newArr[i + 2] = vertices[i + 2] + pos.zpos;
-
-                        //texture coords unchanged (can probably add texture coords to separate array for efficiency)
-                        newArr[i + 3] = vertices[i + 3];
-                        newArr[i + 4] = vertices[i + 4];
-                    }
-
-                    for (int i = 0; i < 30; i++)
-                        coordsList->push_back(newArr[i]);
-
-                }
-            }
-        }
-    }
-
+	return (int)(((CHUNK_HEIGHT - 2)) * elev) + 1;
 }
-

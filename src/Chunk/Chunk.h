@@ -11,164 +11,75 @@
 
 #include <cmath>
 
-#define VERTICES_COUNT 36
-
-typedef struct {
-    int xpos, zpos;
-} chunkPos;
-
-//render different textures for each side of block
-//also add support for other materials later?
-
+//stores which block faces to render
 enum blockFace {
-    BLOCK_FRONT = 1,
-    BLOCK_BACK = 2,
-    BLOCK_RIGHT = 4,
-    BLOCK_LEFT = 8,
-    BLOCK_TOP = 16,
-    BLOCK_BOTTOM = 32
+	BLOCK_FRONT = 1,
+	BLOCK_BACK = 2,
+	BLOCK_RIGHT = 4,
+	BLOCK_LEFT = 8,
+	BLOCK_TOP = 16,
+	BLOCK_BOTTOM = 32
 };
 
-//front is side on the xy-plane
-const static float blockFront[] = {
-    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-
-    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    1.0f, 1.0f, 0.0f,   0.0f, 1.0f,
-    0.0f, 1.0f, 0.0f,   1.0f, 1.0f
-};
-
-const static float blockBack[] = {
-    0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-    1.0f, 0.0f, 1.0f,   1.0f, 0.0f,
-    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-
-    0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-    0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,   1.0f, 1.0f
-};
-
-const static float blockRight[] = {
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
-    0.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
-    0.0f, 1.0f, 1.0f,   1.0f, 1.0f
-};
-
-const static float blockLeft[] = {
-    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-    1.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-
-    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-    1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
-    1.0f, 1.0f, 0.0f,   1.0f, 1.0f
-};
-
-const static float blockTop[] = {
-    0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
-    1.0f, 1.0f, 0.0f,   1.0f, 0.0f,
-    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-
-    0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
-    0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-};
-
-const static float blockBottom[] = {
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,   //bottom left
-    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,   //bottom right
-    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,   //top right
-
-    0.0f, 0.0f, 0.0f,   0.0f, 0.0f,   //bottom left
-    0.0f, 0.0f, 1.0f,   0.0f, 1.0f,   //top left
-    1.0f, 0.0f, 1.0f,   1.0f, 1.0f,   //top right
-};
-
+//chunk size data
 const static unsigned int CHUNK_SIZE = 32;
 const static unsigned int CHUNK_HEIGHT = 128;
 
+//visited bit positions
+const static unsigned int FIRST_VISITED = 64;
+const static unsigned int SECOND_VISITED = 128;
+//active block bit
+const static unsigned int IS_ACTIVE = 256;
+
 class Chunk {
 private:
-    //OpenGL rendering requirements
-    VertexArray va;
-    VertexBuffer vb;
+	//chunk position
+	glm::vec2 chunkPos;
 
-    //make layout, shader, texture static to be used by all chunks after an initial load
-    static bool staticInit;
+	//OpenGL chunk-specific rendering requirements
+	VertexArray va;
+	VertexBuffer vb;
 
-    static VertexBufferLayout layout;
-    static Shader shader;
-    static Texture texture;
-    
-    //camera ptr
-    Camera* camera;
+	//static vars
+	static VertexBufferLayout layout;
+	static Shader shader;
+	static Texture texture;
+	static Noise noiseGen;
+	static bool staticInit;
 
-    //holds whether a block is active at a certain chunk position
-    bool*** activeBlockList;
+	//camera ptr
+	Camera* camera;
 
-    //chunk positions
-    chunkPos pos;
+	//---- 3d array that stores information about blocks in chunk
+	/*
+	* - face data is stored in leftmost 6 bits
+	* - next 2 bits are used by greedy mesher as visit lists
+	*/
+	unsigned short*** blockData;
 
-    //noise generation
-    static Noise noiseGen;
-
-    //height map
-    int** heightMap;
-
-    //tracks which faces are to be rendered
-    int*** blockFaceList;
-
-    //keeps track of visited blocks in the greedy mesher
-    bool*** firstVisited;
-    bool*** secondVisited;
-
-    //cached rendering buffer
-    std::vector<float> verts;
-
-    //boolean that tests whether chunk has been updated
-    bool chunkHasUpdated;
+	//cache to store vertices to avoid reallocating each frame
+	std::vector<float> verts;
 
 public:
 
-    Chunk();
-    ~Chunk();
+	//constructor & destructor
+	Chunk(Camera* camera, int xpos, int ypos);
+	~Chunk();
 
-    Chunk(Camera* camera, int xpos, int ypos);
-    
+	//functions to generate and render chunk mesh data
+	void setData();
+	void generateMesh(std::vector<float>* verts);
+	void render();
 
-    //sets OpenGL data
-    void SetData();
-    //render chunk based on boolean above
-    void Render();
-    //updates block at chunk position
-    void UpdateBlock(int xpos, int ypos, int zpos, bool isActive);
-    //checks whether block at chunk position is actively rendered
-    bool isActive(int xpos, int ypos, int zpos);
+	//individual block methods
+	void updateBlock(int xpos, int ypos, int zpos, bool isActive);
+	bool isActive(int xpos, int ypos, int zpos);
 
-    //translates the vertices of the faces above by (x, y, z)
-    void transFace(const float arr[], float newArr[], int size, int x, int y, int z);
-    //generates height map
-    int heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ);
+	//height generation
+	int heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ);
 
-    //generates the blockk face list
-    void blockFaceGenerator();
-
-    //helper function for rendering in SetData()
-    void setRendering();
-
-    //returns whether chunk has been updated
-    bool chunkUpdated();
-
-    //generate greedy meshes for all chunk sides
-    void GreedyMeshGeneratorBottomToTop(std::vector<float>* coordsList);
-    void GreedyMeshGeneratorBackToFront(std::vector<float>* coordsList);
-    void GreedyMeshGeneratorLeftToRight(std::vector<float>* coordsList);
-
-    void testGreedyMeshGen(std::vector<float>* coordsList);
+	//greedy meshing helper functions
+	void greedyMesherBottomToTop(std::vector<float>* coordsList);
+	void greedyMesherLeftToRight(std::vector<float>* coordsList);
+	void greedyMesherBackToFront(std::vector<float>* coordsList);
 };

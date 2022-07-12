@@ -45,9 +45,6 @@
     <ClCompile Include="src\Camera\Camera.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Chunk\Chunk.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Chunk\ChunkManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -55,6 +52,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\vendor\glad.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Chunk\Chunk.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1373,9 +1373,6 @@
     <ClInclude Include="src\Camera\Camera.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Chunk\Chunk.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="src\Chunk\ChunkManager.h">
       <Filter>headers</Filter>
     </ClInclude>
@@ -1395,6 +1392,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\vendor\GLFW\glfw3native.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Chunk\Chunk.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
