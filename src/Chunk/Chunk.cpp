@@ -143,21 +143,10 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int zpos)
     }
 
     chunkHasUpdated = true;
-    //reserves verts per quad * quads per cube * cubes per chunk
-    // currently ~ 11 MB
-    /*long capacity = 30 * 6 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
-    verts.reserve(capacity);*/
 }
 
 void Chunk::SetData() {
-
-    
-
-
-    //================WORK IN PROGRESS: GREEDY MESHING ALGORITHM================//
-    
     verts.clear();
-    //blockFaceGenerator();
     
     
     GreedyMeshGeneratorBottomToTop(&verts);

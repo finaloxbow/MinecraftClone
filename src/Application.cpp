@@ -80,6 +80,7 @@ int main()
     }
 
     glfwSetWindowPos(window, 0, 0);
+    glfwSwapInterval(0);
 
     //makes window context current
     //----------------------------

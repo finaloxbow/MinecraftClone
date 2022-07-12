@@ -90,7 +90,7 @@ const static float blockBottom[] = {
     1.0f, 0.0f, 1.0f,   1.0f, 1.0f,   //top right
 };
 
-const static unsigned int CHUNK_SIZE = 16;
+const static unsigned int CHUNK_SIZE = 32;
 const static unsigned int CHUNK_HEIGHT = 128;
 
 class Chunk {
