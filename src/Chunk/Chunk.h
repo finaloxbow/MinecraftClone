@@ -13,23 +13,23 @@
 
 //stores which block faces to render
 enum blockFace {
-	BLOCK_FRONT = 1,
-	BLOCK_BACK = 2,
-	BLOCK_RIGHT = 4,
-	BLOCK_LEFT = 8,
-	BLOCK_TOP = 16,
-	BLOCK_BOTTOM = 32
+	BLOCK_FRONT = 1 << 0,
+	BLOCK_BACK = 1 << 1,
+	BLOCK_RIGHT = 1 << 2,
+	BLOCK_LEFT = 1 << 3,
+	BLOCK_TOP = 1 << 4,
+	BLOCK_BOTTOM = 1 << 5
 };
 
 //chunk size data
-const static unsigned int CHUNK_SIZE = 32;
+const static unsigned int CHUNK_SIZE = 16;
 const static unsigned int CHUNK_HEIGHT = 128;
 
 //visited bit positions
-const static unsigned int FIRST_VISITED = 64;
-const static unsigned int SECOND_VISITED = 128;
+const static unsigned int FIRST_VISITED = 1 << 6;
+const static unsigned int SECOND_VISITED = 1 << 7;
 //active block bit
-const static unsigned int IS_ACTIVE = 256;
+const static unsigned int IS_ACTIVE = 1 << 8;
 
 class Chunk {
 private:
@@ -75,6 +75,11 @@ public:
 	void updateBlock(int xpos, int ypos, int zpos, bool isActive);
 	bool isActive(int xpos, int ypos, int zpos);
 
+	//helper methods for greedy mesher
+	bool firstVisited(int xpos, int ypos, int zpos);
+	bool secondVisited(int xpos, int ypos, int zpos);
+	bool blockHasFace(int xpos, int ypos, int zpos, blockFace face);
+
 	//height generation
 	int heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ);
 
@@ -82,4 +87,7 @@ public:
 	void greedyMesherBottomToTop(std::vector<float>* coordsList);
 	void greedyMesherLeftToRight(std::vector<float>* coordsList);
 	void greedyMesherBackToFront(std::vector<float>* coordsList);
+
+	//test functions
+	long numFloats();
 };

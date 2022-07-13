@@ -20,6 +20,8 @@ ChunkManager::ChunkManager(Camera* camera)
 
 }
 
+
+
 void ChunkManager::Render_Chunks()
 {
 	for (auto& iter: loadedChunks) {
