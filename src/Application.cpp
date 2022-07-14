@@ -6,6 +6,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera.h"
 #include "ChunkManager.h"
+#include "MousePicker.h"
 
 //ENTIRE CODE: MADE BY ZIPPY
 
@@ -114,10 +115,15 @@ int main()
     //tests whether fragments in front of other fragments
     glEnable(GL_DEPTH_TEST);
 
+    //MousePicker creation
+    MousePicker picker(&camera, window);
+
+
+
     //rendering done here
     //-------------------
     //Chunk testChunk(&camera, 0, 0);
-    ChunkManager chunkMgr(&camera);
+    ChunkManager chunkMgr(&camera, &picker);
 
     //-------turns on wireframe mode
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -151,7 +157,11 @@ int main()
         /*testChunk.render();
         testChunk.setData();*/
         
-
+        //updates mouse picker data
+        picker.update();
+        printf("%f %f %f \n", picker.getCurrentRay().x, 
+            picker.getCurrentRay().y, 
+            picker.getCurrentRay().z);
 
         chunkMgr.Update_Loaded_Chunks();
         chunkMgr.Render_Chunks();
@@ -168,6 +178,8 @@ int main()
     
     printf("Avg: %f\n", (float)total / numCount);
 
+    //test code to print max floats
+    chunkMgr.printMaxFloats();
 
     glfwTerminate();
     return 0;

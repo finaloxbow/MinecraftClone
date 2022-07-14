@@ -4,14 +4,9 @@
 	- fix chunk rendering around camera position
 */
 
-ChunkManager::ChunkManager(Camera* camera)
-	: camera(camera)
-{ 
-	//initially add 4 chunks around camera
-	chunkList.insert({ glm::vec2(0, 0) , new Chunk(camera, 0, 0)});
-	chunkList.insert({ glm::vec2(0, -1), new Chunk(camera, 0, -1)});
-	chunkList.insert({ glm::vec2(-1, 0), new Chunk(camera, -1, 0)});
-	chunkList.insert({ glm::vec2(-1, -1), new Chunk(camera, -1, -1)});
+ChunkManager::ChunkManager(Camera* camera, MousePicker* picker)
+	: camera(camera), picker(picker)
+{
 	
 	for (auto& iter : chunkList) {
 		iter.second->setData();
@@ -20,13 +15,31 @@ ChunkManager::ChunkManager(Camera* camera)
 
 }
 
-
+static long maxFloats = 0;
+static long maxRendered = 0;
 
 void ChunkManager::Render_Chunks()
 {
+	int tempRendered = 0;
+
+	
+
 	for (auto& iter: loadedChunks) {
 		iter.second->render();
+
+		//test code to find the max number of floats used in mesh generation
+		if (iter.second->numFloats() > maxFloats)
+			maxFloats = iter.second->numFloats();
+		tempRendered++;
 	}
+
+	if (tempRendered > maxRendered)
+		maxRendered = tempRendered;
+}
+
+void ChunkManager::printMaxFloats() {
+	printf("Max floats: %ld \n", maxFloats);
+	printf("Max chunks rendered: %d", maxRendered);
 }
 
 //clear
@@ -70,9 +83,68 @@ void ChunkManager::Update_Loaded_Chunks()
 		}
 	}
 
+	//TEST CODE: prints position for now
+	deleteBlockAtRay();
+
+
+}
+
+void ChunkManager::deleteBlockAtRay()
+{
+	//find which chunk to use as context
+	//find which block first intersects with ray
+	//set block to inactive
+	glm::vec3 camPos = camera->getPosition();
+	glm::vec3 mouseRay = picker->getCurrentRay();
+
+	glm::vec3 chunkContextRay = camPos + mouseRay;
+
+
+	//if >=0 , round down to integer with smaller modulo => static_cast<int>(float)
+	// if < 0, round down to integer with larger modulo => static_cast<int>(float - 1)
+	glm::vec2 chunkKey = glm::vec2(
+		static_cast<int>(chunkContextRay.x >= 0 ? chunkContextRay.x : chunkContextRay.x - 1.0f),
+		static_cast<int>(chunkContextRay.y >= 0 ? chunkContextRay.y : chunkContextRay.y - 1.0f)
+	);
+
+	//finds closest multiple of CHUNK_SIZE below coord
+	if (chunkKey.x < 0) {
+		while (static_cast<int>(chunkKey.x) % CHUNK_SIZE != 0)
+			chunkKey.x -= 1;
+	}
+	else
+		chunkKey.x = chunkKey.x - (static_cast<int>(chunkKey.x) % CHUNK_SIZE);
+
+	if (chunkKey.y < 0) {
+		while (static_cast<int>(chunkKey.y) % CHUNK_SIZE != 0)
+			chunkKey.y -= 1;
+	}
+	else
+		chunkKey.y = chunkKey.y - (static_cast<int>(chunkKey.y) % CHUNK_SIZE);
+
+
+	if (chunkList.find(
+		{
+			static_cast<int>(chunkKey.x),
+			static_cast<int>(chunkKey.y)
+		}) != chunkList.end()) {
+
+		//chunk context to check ray for
+		Chunk* contextChunk = chunkList.find(
+			{
+				static_cast<int>(chunkKey.x),
+				static_cast<int>(chunkKey.y)
+			})->second;
 
 
 
 
+	}
+
+	printf("{ %d, %d }\n", static_cast<int>(chunkKey.x), static_cast<int>(chunkKey.y));
+}
+
+void ChunkManager::addBlockAtRay()
+{
 }
 

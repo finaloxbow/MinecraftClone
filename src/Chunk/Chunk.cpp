@@ -120,7 +120,7 @@ void Chunk::generateMesh(std::vector<float>* coordsList) {
     greedyMesherLeftToRight(coordsList);
 
 
-    //printf("Number of vertices with all sides: %I64u\n", verts.size());
+    printf("Number of vertices with all sides: %I64u\n", verts.size());
 
 }
 

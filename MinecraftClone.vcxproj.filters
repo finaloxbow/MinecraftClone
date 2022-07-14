@@ -57,6 +57,9 @@
     <ClCompile Include="src\Chunk\Chunk.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Chunk\MousePicker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader">
@@ -1395,6 +1398,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="src\Chunk\Chunk.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Chunk\MousePicker.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,8 @@
 #include "MousePicker.h"
 
-/*"reach" of the picker ray*/
-const static float reach = 4.0f;
+//"reach" of the mouse picker ray
+const static float REACH_DISTANCE = 4.0f;
+
 
 MousePicker::MousePicker(Camera* camera, GLFWwindow *window_ptr)
 	: window(window_ptr),
@@ -32,6 +33,10 @@ glm::vec3 MousePicker::calcMouseRay()
 			-1.0f, 1.0f);
 	glm::vec4 eyeCoords = toEyeCoords(clipCoords);
 	glm::vec3 worldRay = toWorldCoords(eyeCoords);
+	worldRay = glm::normalize(worldRay);
+	worldRay = glm::vec3(REACH_DISTANCE * worldRay.x, 
+						 REACH_DISTANCE * worldRay.y,
+						 REACH_DISTANCE * worldRay.z);
 
 	return worldRay;
 
