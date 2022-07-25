@@ -4,8 +4,8 @@
 	- fix chunk rendering around camera position
 */
 
-ChunkManager::ChunkManager(Camera* camera, MousePicker* picker)
-	: camera(camera), picker(picker)
+ChunkManager::ChunkManager(Camera* camera, MousePicker* picker, GLFWwindow* window)
+	: camera(camera), picker(picker), window(window)
 {
 	
 	for (auto& iter : chunkList) {
@@ -82,69 +82,116 @@ void ChunkManager::Update_Loaded_Chunks()
 			}
 		}
 	}
-
-	//TEST CODE: prints position for now
-	deleteBlockAtRay();
-
-
 }
 
 void ChunkManager::deleteBlockAtRay()
 {
-	//find which chunk to use as context
-	//find which block first intersects with ray
-	//set block to inactive
-	glm::vec3 camPos = camera->getPosition();
-	glm::vec3 mouseRay = picker->getCurrentRay();
+	//get blocks from rayStart to rayEnd
+	//check whether block can be activated or deactivated or is outofbounds
+	
+	//given 3d coords for ray:
+		//1. find which block it refers to
+		//2. find chunk for corresponding block
+		//3. find block or declare out of bounds
+		//4. deactive block
+		//5. if block already deactivated, continue along ray until end of ray
+		// or block deleted
 
-	glm::vec3 chunkContextRay = camPos + mouseRay;
+	glm::vec3 currentRay = glm::vec3(0.0f, 0.0f, 0.0f);
+	//iterates from camera to reach distance
+	for (float i = 0.0f; i <= 4.0f; i++) {
+		//get block coords
+		//get chunk for block
+		//test whether block active
+		
+		currentRay = picker->calcMouseRay(i);
+		
+		//find block coords
+		glm::vec3 blockCoords = glm::vec3();
+		glm::vec2 chunkCoords = glm::vec2();
 
+		//x coord
+		if (currentRay.x >= 0) {
+			blockCoords.x = static_cast<int>(currentRay.x);
+			chunkCoords.x = blockCoords.x - 
+				(static_cast<int>(blockCoords.x) % CHUNK_SIZE);
+		}
+		else {
+			blockCoords.x = static_cast<int>(currentRay.x - 1);
+			chunkCoords.x = static_cast<int>(blockCoords.x);
 
-	//if >=0 , round down to integer with smaller modulo => static_cast<int>(float)
-	// if < 0, round down to integer with larger modulo => static_cast<int>(float - 1)
-	glm::vec2 chunkKey = glm::vec2(
-		static_cast<int>(chunkContextRay.x >= 0 ? chunkContextRay.x : chunkContextRay.x - 1.0f),
-		static_cast<int>(chunkContextRay.y >= 0 ? chunkContextRay.y : chunkContextRay.y - 1.0f)
-	);
+			//finds lower multiple of CHUNK_SIZE
+			while (static_cast<int>(chunkCoords.x) % CHUNK_SIZE != 0)
+				chunkCoords.x -= 1;
+		}
+		//y coord
+		if (currentRay.y >= 0)
+			blockCoords.y = static_cast<int>(currentRay.y);
+		else
+			blockCoords.y = static_cast<int>(currentRay.y - 1);
+		//z coord
+		if (currentRay.z >= 0) {
+			blockCoords.z = static_cast<int>(currentRay.z);
+			chunkCoords.y = blockCoords.z -
+				(static_cast<int>(blockCoords.z) % CHUNK_SIZE);
+		}
+		else {
+			blockCoords.z = static_cast<int>(currentRay.z - 1);
+			chunkCoords.y = static_cast<int>(blockCoords.z);
 
-	//finds closest multiple of CHUNK_SIZE below coord
-	if (chunkKey.x < 0) {
-		while (static_cast<int>(chunkKey.x) % CHUNK_SIZE != 0)
-			chunkKey.x -= 1;
+			//finds lower multiple of CHUNK_SIZE
+			while (static_cast<int>(chunkCoords.y) % CHUNK_SIZE != 0)
+				chunkCoords.y -= 1;
+		}
+
+		//finds the chunk for the block
+		Chunk* contextChunk = chunkList.find({ static_cast<int>(chunkCoords.x),
+			static_cast<int>(chunkCoords.y) }) != chunkList.end() 
+			? chunkList.find({ static_cast<int>(chunkCoords.x),static_cast<int>(chunkCoords.y) })->second 
+			: nullptr;
+
+		//find coords of block inside the chunk
+		//if blockCoord +, just mod with CHUNK_SIZE
+		//if blockCoord -, do CHUNK_SIZE - (-blockCoord.y) % CHUNK_SIZE
+		glm::vec3 blockCoordsInsideChunk = glm::vec3();
+
+		blockCoordsInsideChunk.x = blockCoords.x >= 0
+			? static_cast<int>(blockCoords.x) % CHUNK_SIZE
+			: CHUNK_SIZE - ((-static_cast<int>(blockCoords.x)) % CHUNK_SIZE);
+
+		blockCoordsInsideChunk.y = static_cast<int>(blockCoords.y);
+
+		blockCoordsInsideChunk.z = blockCoords.z >= 0
+			? static_cast<int>(blockCoords.z) % CHUNK_SIZE
+			: CHUNK_SIZE - ((-static_cast<int>(blockCoords.z)) % CHUNK_SIZE);
+
+		//TEST----------------------
+		printf("Block Coords Inside Chunk: %f %f %f\n", blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z);
+		printf("Chunk Coords: %f %f\n", chunkCoords.x, chunkCoords.y);
+
+		//x and z guaranteed to be within chunk boundaries
+		//just need to check that y-value is within bounds of 0 to CHUNK_HEIGHT, inclusive
+		if (blockCoordsInsideChunk.y >= 0
+			&& blockCoordsInsideChunk.y < CHUNK_HEIGHT
+			&& contextChunk != nullptr
+			&& contextChunk->isActive(blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z)) {
+			//if the block is active, set to inactive and end loop
+			contextChunk->updateBlock(blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z, false);
+			break;
+		}
+
 	}
-	else
-		chunkKey.x = chunkKey.x - (static_cast<int>(chunkKey.x) % CHUNK_SIZE);
-
-	if (chunkKey.y < 0) {
-		while (static_cast<int>(chunkKey.y) % CHUNK_SIZE != 0)
-			chunkKey.y -= 1;
-	}
-	else
-		chunkKey.y = chunkKey.y - (static_cast<int>(chunkKey.y) % CHUNK_SIZE);
-
-
-	if (chunkList.find(
-		{
-			static_cast<int>(chunkKey.x),
-			static_cast<int>(chunkKey.y)
-		}) != chunkList.end()) {
-
-		//chunk context to check ray for
-		Chunk* contextChunk = chunkList.find(
-			{
-				static_cast<int>(chunkKey.x),
-				static_cast<int>(chunkKey.y)
-			})->second;
-
-
-
-
-	}
-
-	printf("{ %d, %d }\n", static_cast<int>(chunkKey.x), static_cast<int>(chunkKey.y));
 }
 
 void ChunkManager::addBlockAtRay()
 {
+
 }
 
+void ChunkManager::procBlockInput()
+{
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		deleteBlockAtRay();
+		printf("LEFT CLICK\n");
+	}
+}

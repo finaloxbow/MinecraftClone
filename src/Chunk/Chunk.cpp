@@ -43,49 +43,17 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int ypos) {
             int zpos = chunkPos.y;
             int height = heightMapGenerator(x, z, xpos, zpos);
 
-            for (int y = 0; y < height; y++) {
+            //change height back to 16
+            for (int y = 0; y < 16; y++) {
                 //sets blocks up to height as active
                 blockData[x][y][z] |= IS_ACTIVE;
             }
         }
     }
 
+    generateFaceData();
+
     
-
-    //generate face data
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int z = 0; z < CHUNK_SIZE; z++) {
-            int xpos = chunkPos.x;
-            int zpos = chunkPos.y;
-            int height = heightMapGenerator(x, z, xpos, zpos);
-
-            for (int y = 0; y < height; y++) {
-                //blockData[x][y][z] & IS_ACTIVE != 0
-                if ((blockData[x][y][z] & IS_ACTIVE) != 0) {
-                    //bottom face
-                    if (y == 0 || (blockData[x][y - 1][z] & IS_ACTIVE) == 0)
-                        blockData[x][y][z] |= BLOCK_BOTTOM;
-                    //top face
-                    if (y < CHUNK_HEIGHT - 1 && (blockData[x][y + 1][z] & IS_ACTIVE) == 0)
-                        blockData[x][y][z] |= BLOCK_TOP;
-                    //left face (-x)
-                    if (x == 0 || (blockData[x - 1][y][z] & IS_ACTIVE) == 0)
-                        blockData[x][y][z] |= BLOCK_LEFT;
-                    //right face (+x)
-                    if (x == CHUNK_SIZE - 1 || (x < CHUNK_SIZE - 1 && (blockData[x + 1][y][z] & IS_ACTIVE) == 0))
-                        blockData[x][y][z] |= BLOCK_RIGHT;
-                    //back face (-z)
-                    if (z == 0 || (blockData[x][y][z - 1] & IS_ACTIVE) == 0)
-                        blockData[x][y][z] |= BLOCK_BACK;
-                    //front face (+z)
-                    if (z == CHUNK_SIZE - 1 || (z < CHUNK_SIZE - 1 && (blockData[x][y][z + 1] & IS_ACTIVE) == 0))
-                        blockData[x][y][z] |= BLOCK_FRONT;
-                }
-            }
-        }
-    }
-
-
 }
 
 Chunk::~Chunk() {
@@ -122,6 +90,51 @@ void Chunk::generateMesh(std::vector<float>* coordsList) {
 
     printf("Number of vertices with all sides: %I64u\n", verts.size());
 
+}
+
+
+void Chunk::generateFaceData() {
+    //generate face data
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            int xpos = chunkPos.x;
+            int zpos = chunkPos.y;
+            int height = heightMapGenerator(x, z, xpos, zpos);
+
+            for (int y = 0; y < CHUNK_HEIGHT; y++) {
+                blockData[x][y][z] &= ~BLOCK_BOTTOM;
+                blockData[x][y][z] &= ~BLOCK_TOP;
+                blockData[x][y][z] &= ~BLOCK_RIGHT;
+                blockData[x][y][z] &= ~BLOCK_LEFT;
+                blockData[x][y][z] &= ~BLOCK_FRONT;
+                blockData[x][y][z] &= ~BLOCK_BACK;
+            }
+
+            for (int y = 0; y < CHUNK_HEIGHT; y++) {
+                //blockData[x][y][z] & IS_ACTIVE != 0
+                if ((blockData[x][y][z] & IS_ACTIVE) != 0) {
+                    //bottom face
+                    if (y == 0 || (blockData[x][y - 1][z] & IS_ACTIVE) == 0)
+                        blockData[x][y][z] |= BLOCK_BOTTOM;
+                    //top face
+                    if (y < CHUNK_HEIGHT - 1 && (blockData[x][y + 1][z] & IS_ACTIVE) == 0)
+                        blockData[x][y][z] |= BLOCK_TOP;
+                    //left face (-x)
+                    if (x == 0 || (blockData[x - 1][y][z] & IS_ACTIVE) == 0)
+                        blockData[x][y][z] |= BLOCK_LEFT;
+                    //right face (+x)
+                    if (x == CHUNK_SIZE - 1 || (x < CHUNK_SIZE - 1 && (blockData[x + 1][y][z] & IS_ACTIVE) == 0))
+                        blockData[x][y][z] |= BLOCK_RIGHT;
+                    //back face (-z)
+                    if (z == 0 || (blockData[x][y][z - 1] & IS_ACTIVE) == 0)
+                        blockData[x][y][z] |= BLOCK_BACK;
+                    //front face (+z)
+                    if (z == CHUNK_SIZE - 1 || (z < CHUNK_SIZE - 1 && (blockData[x][y][z + 1] & IS_ACTIVE) == 0))
+                        blockData[x][y][z] |= BLOCK_FRONT;
+                }
+            }
+        }
+    }
 }
 
 void Chunk::greedyMesherBottomToTop(std::vector<float>* coordsList){
@@ -656,6 +669,19 @@ void Chunk::render() {
 
 void Chunk::updateBlock(int xpos, int ypos, int zpos, bool isActive) {
 	//update blockData and faces around it
+    
+    //if block is being added
+    //if (isActive) {
+    //    //set active
+    //    blockData[xpos][ypos][zpos] |= IS_ACTIVE;
+    //    generateFaceData();
+    //}
+    //else {
+    //    blockData[xpos][ypos][zpos] &= ~IS_ACTIVE;
+    //    generateFaceData();
+    //}
+    blockData[xpos][ypos][zpos] &= ~IS_ACTIVE;
+    generateFaceData();
 }
 
 //true if block position is active, false otherwise

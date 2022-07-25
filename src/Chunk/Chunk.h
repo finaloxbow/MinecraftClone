@@ -70,6 +70,7 @@ public:
 	void setData();
 	void generateMesh(std::vector<float>* verts);
 	void render();
+	void generateFaceData();
 
 	//individual block methods
 	void updateBlock(int xpos, int ypos, int zpos, bool isActive);

@@ -6,6 +6,7 @@
 #include <math.h>
 #include "glm/gtx/hash.hpp"
 #include "MousePicker.h"
+#include "GLFW/glfw3.h"
 
 
 class ChunkManager {
@@ -18,12 +19,13 @@ private:
 
 	Camera* camera;
 	MousePicker* picker;
+	GLFWwindow* window;
 
 	const static int radius = 16 * CHUNK_SIZE;
 
 public:
 
-	ChunkManager(Camera *camera, MousePicker* picker);
+	ChunkManager(Camera *camera, MousePicker* picker, GLFWwindow* window);
 
 	//render all chunks in visibility list
 	void Render_Chunks();
@@ -42,4 +44,6 @@ public:
 
 	//test function to print the max number of floats used by a single chunk
 	void printMaxFloats();
+
+	void procBlockInput();
 };

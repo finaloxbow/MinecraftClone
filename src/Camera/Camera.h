@@ -48,4 +48,5 @@ public:
 	//MVP matrix getters
 	glm::mat4 getPerspectiveMatrix();
 	glm::mat4 getViewMatrix();
+	glm::vec3 getCameraFront();
 };

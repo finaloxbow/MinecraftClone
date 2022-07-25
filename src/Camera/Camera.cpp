@@ -94,10 +94,14 @@ void Camera::mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 }
 
 glm::mat4 Camera::getPerspectiveMatrix() {
-    //change 800 and 600 into SCR_WIDTH and SCR_HEIGHT
+    //change into SCR_WIDTH and SCR_HEIGHT
     return glm::perspective(glm::radians(fov), (float)1920 / (float)1080, 0.1f, 10000.0f);
 }
 
 glm::mat4 Camera::getViewMatrix() {
     return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
+glm::vec3 Camera::getCameraFront() {
+    return cameraFront;
 }

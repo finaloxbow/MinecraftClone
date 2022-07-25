@@ -15,10 +15,8 @@ class MousePicker {
 private:
 	GLFWwindow *window;
 	glm::vec3 currentRay;
-	glm::mat4 viewMatrix;
 	Camera* camera;
 
-	glm::vec2 getNormalizedDeviceCoords(double mouseX, double mouseY);
 
 public:
 
@@ -31,7 +29,5 @@ public:
 	void update();
 
 	//calculates mouse ray
-	glm::vec3 calcMouseRay();
-	glm::vec3 toWorldCoords(glm::vec4 eyeCoords);
-	glm::vec4 toEyeCoords(glm::vec4 clipCoords);
+	glm::vec3 calcMouseRay(float scalingCoeff);
 };

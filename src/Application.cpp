@@ -123,7 +123,7 @@ int main()
     //rendering done here
     //-------------------
     //Chunk testChunk(&camera, 0, 0);
-    ChunkManager chunkMgr(&camera, &picker);
+    ChunkManager chunkMgr(&camera, &picker, window);
 
     //-------turns on wireframe mode
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -159,12 +159,10 @@ int main()
         
         //updates mouse picker data
         picker.update();
-        printf("%f %f %f \n", picker.getCurrentRay().x, 
-            picker.getCurrentRay().y, 
-            picker.getCurrentRay().z);
 
         chunkMgr.Update_Loaded_Chunks();
         chunkMgr.Render_Chunks();
+        chunkMgr.procBlockInput();
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
