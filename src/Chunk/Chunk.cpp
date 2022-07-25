@@ -671,17 +671,16 @@ void Chunk::updateBlock(int xpos, int ypos, int zpos, bool isActive) {
 	//update blockData and faces around it
     
     //if block is being added
-    //if (isActive) {
-    //    //set active
-    //    blockData[xpos][ypos][zpos] |= IS_ACTIVE;
-    //    generateFaceData();
-    //}
-    //else {
-    //    blockData[xpos][ypos][zpos] &= ~IS_ACTIVE;
-    //    generateFaceData();
-    //}
-    blockData[xpos][ypos][zpos] &= ~IS_ACTIVE;
-    generateFaceData();
+    if (isActive) {
+        //set active
+        blockData[xpos][ypos][zpos] |= IS_ACTIVE;
+        generateFaceData();
+    }
+    else {
+        blockData[xpos][ypos][zpos] &= ~IS_ACTIVE;
+        generateFaceData();
+    }
+
 }
 
 //true if block position is active, false otherwise

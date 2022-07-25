@@ -7,16 +7,11 @@
 ChunkManager::ChunkManager(Camera* camera, MousePicker* picker, GLFWwindow* window)
 	: camera(camera), picker(picker), window(window)
 {
-	
-	for (auto& iter : chunkList) {
-		iter.second->setData();
-		loadedChunks.insert({ iter.first, iter.second});
-	}
-
 }
 
 static long maxFloats = 0;
 static long maxRendered = 0;
+static int counter = 0;
 
 void ChunkManager::Render_Chunks()
 {
@@ -31,6 +26,8 @@ void ChunkManager::Render_Chunks()
 		if (iter.second->numFloats() > maxFloats)
 			maxFloats = iter.second->numFloats();
 		tempRendered++;
+
+
 	}
 
 	if (tempRendered > maxRendered)
@@ -86,100 +83,69 @@ void ChunkManager::Update_Loaded_Chunks()
 
 void ChunkManager::deleteBlockAtRay()
 {
-	//get blocks from rayStart to rayEnd
-	//check whether block can be activated or deactivated or is outofbounds
-	
-	//given 3d coords for ray:
-		//1. find which block it refers to
-		//2. find chunk for corresponding block
-		//3. find block or declare out of bounds
-		//4. deactive block
-		//5. if block already deactivated, continue along ray until end of ray
-		// or block deleted
+	for (float i = 0.0f; i <= 8.0f; i += 1) {
+		glm::vec3 mouseRay = picker->calcMouseRay(i);
 
-	glm::vec3 currentRay = glm::vec3(0.0f, 0.0f, 0.0f);
-	//iterates from camera to reach distance
-	for (float i = 0.0f; i <= 4.0f; i++) {
-		//get block coords
-		//get chunk for block
-		//test whether block active
+		//find chunk coords (ez)
+		glm::vec2 chunkCoords(0.0f, 0.0f);
 		
-		currentRay = picker->calcMouseRay(i);
-		
-		//find block coords
-		glm::vec3 blockCoords = glm::vec3();
-		glm::vec2 chunkCoords = glm::vec2();
-
 		//x coord
-		if (currentRay.x >= 0) {
-			blockCoords.x = static_cast<int>(currentRay.x);
-			chunkCoords.x = blockCoords.x - 
-				(static_cast<int>(blockCoords.x) % CHUNK_SIZE);
-		}
+		if (mouseRay.x >= 0)
+			chunkCoords.x = static_cast<int>(mouseRay.x)
+			- (static_cast<int>(mouseRay.x) % CHUNK_SIZE);
 		else {
-			blockCoords.x = static_cast<int>(currentRay.x - 1);
-			chunkCoords.x = static_cast<int>(blockCoords.x);
-
-			//finds lower multiple of CHUNK_SIZE
+			chunkCoords.x = static_cast<int>(mouseRay.x - 1);
 			while (static_cast<int>(chunkCoords.x) % CHUNK_SIZE != 0)
 				chunkCoords.x -= 1;
 		}
-		//y coord
-		if (currentRay.y >= 0)
-			blockCoords.y = static_cast<int>(currentRay.y);
-		else
-			blockCoords.y = static_cast<int>(currentRay.y - 1);
-		//z coord
-		if (currentRay.z >= 0) {
-			blockCoords.z = static_cast<int>(currentRay.z);
-			chunkCoords.y = blockCoords.z -
-				(static_cast<int>(blockCoords.z) % CHUNK_SIZE);
-		}
-		else {
-			blockCoords.z = static_cast<int>(currentRay.z - 1);
-			chunkCoords.y = static_cast<int>(blockCoords.z);
 
-			//finds lower multiple of CHUNK_SIZE
+		//z coord
+		if (mouseRay.z >= 0)
+			chunkCoords.y = static_cast<int>(mouseRay.z)
+			- (static_cast<int>(mouseRay.z) % CHUNK_SIZE);
+		else {
+			chunkCoords.y = static_cast<int>(mouseRay.z - 1);
 			while (static_cast<int>(chunkCoords.y) % CHUNK_SIZE != 0)
 				chunkCoords.y -= 1;
 		}
 
-		//finds the chunk for the block
 		Chunk* contextChunk = chunkList.find({ static_cast<int>(chunkCoords.x),
-			static_cast<int>(chunkCoords.y) }) != chunkList.end() 
-			? chunkList.find({ static_cast<int>(chunkCoords.x),static_cast<int>(chunkCoords.y) })->second 
+			static_cast<int>(chunkCoords.y) }) != chunkList.end()
+			? chunkList.find({ static_cast<int>(chunkCoords.x),static_cast<int>(chunkCoords.y) })->second
 			: nullptr;
 
-		//find coords of block inside the chunk
-		//if blockCoord +, just mod with CHUNK_SIZE
-		//if blockCoord -, do CHUNK_SIZE - (-blockCoord.y) % CHUNK_SIZE
-		glm::vec3 blockCoordsInsideChunk = glm::vec3();
+		bool endLoop = false;
 
-		blockCoordsInsideChunk.x = blockCoords.x >= 0
-			? static_cast<int>(blockCoords.x) % CHUNK_SIZE
-			: CHUNK_SIZE - ((-static_cast<int>(blockCoords.x)) % CHUNK_SIZE);
-
-		blockCoordsInsideChunk.y = static_cast<int>(blockCoords.y);
-
-		blockCoordsInsideChunk.z = blockCoords.z >= 0
-			? static_cast<int>(blockCoords.z) % CHUNK_SIZE
-			: CHUNK_SIZE - ((-static_cast<int>(blockCoords.z)) % CHUNK_SIZE);
-
-		//TEST----------------------
-		printf("Block Coords Inside Chunk: %f %f %f\n", blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z);
-		printf("Chunk Coords: %f %f\n", chunkCoords.x, chunkCoords.y);
-
-		//x and z guaranteed to be within chunk boundaries
-		//just need to check that y-value is within bounds of 0 to CHUNK_HEIGHT, inclusive
-		if (blockCoordsInsideChunk.y >= 0
-			&& blockCoordsInsideChunk.y < CHUNK_HEIGHT
-			&& contextChunk != nullptr
-			&& contextChunk->isActive(blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z)) {
-			//if the block is active, set to inactive and end loop
-			contextChunk->updateBlock(blockCoordsInsideChunk.x, blockCoordsInsideChunk.y, blockCoordsInsideChunk.z, false);
-			break;
+		if (contextChunk != nullptr) {
+			//iterate over entire grid and do AABB collision testing
+			for (int x = 0; x < CHUNK_SIZE; x++) {
+				for (int y = 0; y < CHUNK_HEIGHT; y++) {
+					for (int z = 0; z < CHUNK_SIZE; z++) {
+						//m.x inbetween x + chunk.x and x + 1 + chunk.x
+						//m.y inbetween y + chunk.y and y + 1
+						//m.z inbetween z and z + 1
+						if (mouseRay.x >= x + chunkCoords.x
+							&& mouseRay.x <= x + 1 + chunkCoords.x
+							&& mouseRay.y >= y
+							&& mouseRay.y <= y + 1
+							&& mouseRay.z >= z + chunkCoords.y
+							&& mouseRay.z <= z + 1 + chunkCoords.y
+							&& contextChunk->isActive(x, y, z)) {
+							//delete block and end loop
+							std::cout << "Block Coords: " << x << "," << y << ", " << z << "\n";
+							contextChunk->updateBlock(x, y, z, false);
+							contextChunk->setData();
+							endLoop = true;
+							break;
+						}
+					}
+					if (endLoop)
+						break;
+				}
+				if (endLoop)
+					break;
+			}
 		}
-
 	}
 }
 
