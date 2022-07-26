@@ -157,6 +157,7 @@ void ChunkManager::addBlockAtRay()
 	bool endLoop = false;
 	bool activeBlockReached = false;
 	glm::vec3 previousEmptyBlock = glm::vec3(0.0f, 0.0f, 0.0f);
+	Chunk* previousBlockChunk = nullptr;
 
 	for (float i = 0.0f; i <= 8.0f; i++) {
 		//find first active block
@@ -209,8 +210,8 @@ void ChunkManager::addBlockAtRay()
 							&& mouseRay.z <= z + 1 + chunkCoords.y) {
 							if (contextChunk->isActive(x, y, z) && i >= 1.0f) {
 								//place block at last empty position
-								contextChunk->updateBlock(previousEmptyBlock.x, previousEmptyBlock.y, previousEmptyBlock.z, true);
-								contextChunk->setData();
+								previousBlockChunk->updateBlock(previousEmptyBlock.x, previousEmptyBlock.y, previousEmptyBlock.z, true);
+								previousBlockChunk->setData();
 								endLoop = true;
 								break;
 							}
@@ -219,10 +220,11 @@ void ChunkManager::addBlockAtRay()
 								break;
 							}
 							else {
-								//update lastEmptyBlockVector
+								//update lastEmptyBlockVector and chunk ptr
 								previousEmptyBlock.x = x;
 								previousEmptyBlock.y = y;
 								previousEmptyBlock.z = z;
+								previousBlockChunk = contextChunk;
 							}
 
 						}
