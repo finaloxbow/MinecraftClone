@@ -154,7 +154,6 @@
     <ClCompile Include="src\Chunk\ChunkManager.cpp" />
     <ClCompile Include="src\Chunk\Chunk.cpp" />
     <ClCompile Include="src\Chunk\MousePicker.cpp" />
-    <ClCompile Include="src\DataStructures\LRUCache.cpp" />
     <ClCompile Include="src\Noise\Noise.cpp" />
     <ClCompile Include="src\Rendering\IndexBuffer.cpp" />
     <ClCompile Include="src\Shader\Shader.cpp" />

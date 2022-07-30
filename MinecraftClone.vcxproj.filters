@@ -60,9 +60,6 @@
     <ClCompile Include="src\Chunk\MousePicker.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\DataStructures\LRUCache.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader">

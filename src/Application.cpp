@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "ChunkManager.h"
 #include "MousePicker.h"
+#include "DataStructures/LRUCache.h"
 
 //ENTIRE CODE: MADE BY ZIPPY
 
@@ -178,6 +179,27 @@ int main()
 
     //test code to print max floats
     chunkMgr.printMaxFloats();
+
+    //testing LRU cache
+    //LRUCache<int, int> cache(3);
+    //cache.put(123, 1);
+    //cache.put(1, 37);
+    //cache.put(4, 3);
+    //cache.get(4);
+    //std::vector<int> keys;
+    //auto iter = cache.iterator();
+    //printf("\n");
+    ////
+    //for (auto& ptr = iter.first; ptr != iter.second; ptr++) {
+    //    keys.push_back(ptr->first);
+    //}
+    ////values
+    //for (auto& iter : keys) {
+    //    printf("%d\n", *cache.get(iter));
+    //}
+
+
+
 
     glfwTerminate();
     return 0;
