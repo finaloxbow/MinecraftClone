@@ -120,6 +120,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>src; src\vendor; src\camera; src\chunk; src\Rendering; src\Shader; src\Textures;</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -314,6 +315,7 @@
     <ClInclude Include="src\Chunk\Chunk.h" />
     <ClInclude Include="src\Chunk\ChunkManager.h" />
     <ClInclude Include="src\Chunk\MousePicker.h" />
+    <ClInclude Include="src\Chunk\StaticChunkData.h" />
     <ClInclude Include="src\DataStructures\LRUCache.h" />
     <ClInclude Include="src\Noise\Noise.h" />
     <ClInclude Include="src\Rendering\IndexBuffer.h" />

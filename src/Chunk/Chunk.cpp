@@ -1,27 +1,10 @@
 #include "Chunk.h"
 
-//static vars init
-VertexBufferLayout Chunk::layout;
-Shader Chunk::shader;
-Texture Chunk::texture;
-Noise Chunk::noiseGen;
-bool Chunk::staticInit = false;
-
-Chunk::Chunk(Camera* cameraIn, int xpos, int ypos) {
+Chunk::Chunk(Camera* cameraIn, StaticChunkData* chunkDataIn, int xpos, int ypos) {
 	
 	camera = cameraIn;
 	chunkPos = { xpos, ypos};
-
-	//initializes shader, texture, and layout for all chunks
-	if (!staticInit) {
-		layout.Push<float>(3);
-		layout.Push<float>(2);
-
-		shader.Set_Data("res/shaders/Basic.shader");
-		texture.Set_Data("res/textures/concreteTexture.png");
-
-		staticInit = true;
-	}
+    chunkData = chunkDataIn;
 
 	//init blockData 3d array
 	blockData = new unsigned short** [CHUNK_SIZE];
@@ -69,15 +52,15 @@ void Chunk::setData() {
 	vb.Set_Data(&verts[0], (unsigned int)verts.size() * sizeof(verts[0]));
 
 	//sets buffer layout with buffer
-	va.AddBuffer(vb, layout);
+	va.AddBuffer(vb, chunkData->layout);
 
 	//creates and starts shader program
-	shader.Bind();
+    chunkData->shader.Bind();
 
 	//loads texture and binds to slot 0
-	texture.Bind();
-	shader.SetUniform1i("u_Texture", 0);
-	shader.SetUniform1i("u_Texture", 0);
+    chunkData->texture.Bind();
+    chunkData->shader.SetUniform1i("u_Texture", 0);
+    chunkData->shader.SetUniform1i("u_Texture", 0);
 }
 
 void Chunk::generateMesh(std::vector<float>* coordsList) {
@@ -654,7 +637,7 @@ long Chunk::numFloats()
 void Chunk::render() {
 	//sets model-view-projection matrix and sends to shader
 	//MVP = proj * view * model
-	shader.SetUniformMat4f("u_MVP",
+    chunkData->shader.SetUniformMat4f("u_MVP",
 		camera->getPerspectiveMatrix()
 		* camera->getViewMatrix()
 		* glm::mat4(1.0f));
@@ -712,9 +695,9 @@ int Chunk::heightMapGenerator(int xpos, int zpos, int chunkX, int chunkZ) {
 		return 0;
 
 	//-1.5 to 1.5
-	float elev = (noiseGen.getNoise(xpos + chunkX, zpos + chunkZ)
-		+ 0.5 * noiseGen.getNoise(2 * (xpos + chunkX), 2 * (zpos + chunkZ))
-		+ 0.25 * noiseGen.getNoise(4 * (xpos + chunkX), 4 * (zpos + chunkZ)));
+	float elev = (chunkData->noiseGen.getNoise(xpos + chunkX, zpos + chunkZ)
+		+ 0.5 * chunkData->noiseGen.getNoise(2 * (xpos + chunkX), 2 * (zpos + chunkZ))
+		+ 0.25 * chunkData->noiseGen.getNoise(4 * (xpos + chunkX), 4 * (zpos + chunkZ)));
 	//-1 to 1
 	elev /= 1.75;
 	//0 to 2

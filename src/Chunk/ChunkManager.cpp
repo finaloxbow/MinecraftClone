@@ -68,14 +68,14 @@ void ChunkManager::Update_Loaded_Chunks()
 			if (i % CHUNK_SIZE == 0 && j % CHUNK_SIZE == 0) {
 
 				if (chunkList.find({ i, j }) != chunkList.end()) {
-					loadedChunks.insert({ glm::vec2(i, j) , chunkList.find({i, j})->second });
+					loadedChunks.insert({ glm::ivec2(i, j) , chunkList.find({i, j})->second });
 				}
 				else 
 				{
 					//inserts new chunk into each chunk list and sets its data
-					chunkList.insert({ glm::vec2{i , j}, new Chunk(camera, i, j)});
-					loadedChunks.insert({ {glm::vec2{i, j}, chunkList.find({i,j})->second} });
-					loadedChunks.find(glm::vec2{ i,j })->second->setData();
+					chunkList.insert({ glm::ivec2{i , j}, new Chunk(camera, &chunkData, i, j)});
+					loadedChunks.insert({ {glm::ivec2{i, j}, chunkList.find(glm::ivec2{i, j})->second} });
+					loadedChunks.find(glm::ivec2{ i,j })->second->setData();
 				}
 			}
 		}
@@ -90,7 +90,7 @@ void ChunkManager::deleteBlockAtRay()
 		glm::vec3 mouseRay = picker->calcMouseRay(i);
 
 		//find chunk coords (ez)
-		glm::vec2 chunkCoords(0.0f, 0.0f);
+		glm::ivec2 chunkCoords(0, 0);
 		
 		//x coord
 		if (mouseRay.x >= 0)
@@ -166,7 +166,7 @@ void ChunkManager::addBlockAtRay()
 		glm::vec3 mouseRay = picker->calcMouseRay(i);
 
 		//find chunk coords (ez)
-		glm::vec2 chunkCoords(0.0f, 0.0f);
+		glm::ivec2 chunkCoords(0, 0);
 
 		//x coord
 		if (mouseRay.x >= 0)

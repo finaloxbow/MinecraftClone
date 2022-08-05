@@ -8,6 +8,7 @@
 #include "Camera/Camera.h"
 #include "IndexBuffer.h"
 #include "Noise/Noise.h"
+#include "StaticChunkData.h"
 
 #include <cmath>
 
@@ -34,18 +35,13 @@ const static unsigned int IS_ACTIVE = 1 << 8;
 class Chunk {
 private:
 	//chunk position
-	glm::vec2 chunkPos;
+	glm::ivec2 chunkPos;
 
 	//OpenGL chunk-specific rendering requirements
 	VertexArray va;
 	VertexBuffer vb;
 
-	//static vars
-	static VertexBufferLayout layout;
-	static Shader shader;
-	static Texture texture;
-	static Noise noiseGen;
-	static bool staticInit;
+	StaticChunkData* chunkData;
 
 	//camera ptr
 	Camera* camera;
@@ -63,7 +59,7 @@ private:
 public:
 
 	//constructor & destructor
-	Chunk(Camera* camera, int xpos, int ypos);
+	Chunk(Camera* camera, StaticChunkData* chunkDataIn, int xpos, int ypos);
 	~Chunk();
 
 	//functions to generate and render chunk mesh data

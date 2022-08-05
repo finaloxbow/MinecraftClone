@@ -7,15 +7,17 @@
 #include "glm/gtx/hash.hpp"
 #include "MousePicker.h"
 #include "GLFW/glfw3.h"
+#include "StaticChunkData.h"
 
 
 class ChunkManager {
 private:
 	//list of all chunks
-	std::unordered_map<glm::vec2, Chunk*> chunkList;
+	std::unordered_map<glm::ivec2, Chunk*> chunkList;
 	//list of loaded chunks
-	std::unordered_map<glm::vec2, Chunk*> loadedChunks;
+	std::unordered_map<glm::ivec2, Chunk*> loadedChunks;
 
+	StaticChunkData chunkData;
 
 	Camera* camera;
 	MousePicker* picker;
