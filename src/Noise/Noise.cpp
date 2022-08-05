@@ -7,7 +7,6 @@ Noise::Noise()
 	noise.SetFractalType(FastNoiseLite::FractalType::FractalType_PingPong);
 	noise.SetFractalOctaves(5);
 	noise.SetFractalGain(0.4);
-
 }
 
 float Noise::getNoise(int x, int z)
