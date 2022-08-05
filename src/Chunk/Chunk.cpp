@@ -44,7 +44,7 @@ Chunk::Chunk(Camera* cameraIn, int xpos, int ypos) {
             int height = heightMapGenerator(x, z, xpos, zpos);
 
             //change height back to 16
-            for (int y = 0; y < 16; y++) {
+            for (int y = 0; y < height; y++) {
                 //sets blocks up to height as active
                 blockData[x][y][z] |= IS_ACTIVE;
             }
