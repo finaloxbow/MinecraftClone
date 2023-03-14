@@ -1403,9 +1403,6 @@
     <ClInclude Include="src\Chunk\MousePicker.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="src\DataStructures\LRUCache.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="src\Chunk\StaticChunkData.h">
       <Filter>headers</Filter>
     </ClInclude>
