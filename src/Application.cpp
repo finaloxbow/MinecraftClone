@@ -1,206 +1,223 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include "stb_image.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "Camera.h"
-#include "ChunkManager.h"
-#include "MousePicker.h"
-#include "DataStructures/LRUCache.h"
-
-//ENTIRE CODE: MADE BY ZIPPY
+#include "../shader/shader.h"
+#include "../camera/camera.h"
 
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+float vertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-// settings
-unsigned int SCR_WIDTH = 1920;
-unsigned int SCR_HEIGHT = 1080;
-float fov = 60.0f;
-Camera camera;
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-/*TODO:
-    - render chunk in a single draw call (DONE)
-    - make it so covered faces are not rendered
-*/
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
-{
-   
-    //close window
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-    //camera controls (move into camera class and call here)
-    camera.keyboard_input(window);
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-    SCR_WIDTH = width;
-    SCR_HEIGHT = height;
+void process_input(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
 }
 
-//zoom in controls with scroll
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    fov -= (float)yoffset;
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
-}
+int main() {
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-int main()
-{
+	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
+	if (window == nullptr) {
+		std::cout << "Window creation failed\n";
+		glfwTerminate();
+		return -1;
+	}
 
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//sets user ptr in window
+	camera camera(window, SCR_WIDTH, SCR_HEIGHT);
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+	glfwMakeContextCurrent(window);
 
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cout << "GLAD init failed\n";
+		return -1;
+	}
 
-    glfwSetWindowPos(window, 0, 0);
-    glfwSwapInterval(0);
+	//enable depth testing
+	glEnable(GL_DEPTH_TEST);
 
-    //makes window context current
-    //----------------------------
-    glfwMakeContextCurrent(window);
-    
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	shader shader("./res/shaders/vertex.shader", "./res/shaders/fragment.shader");
 
-    //setting window size change function pointer
-    //-------------------------------------------
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    //sets cursor callback func
-    camera.set_cursor_callback(window, &camera);
-    //sets scroll callback func
-    glfwSetScrollCallback(window, scroll_callback);
+	unsigned int vao, vbo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
 
-    //sets fov correctly
-    camera.Set_Data(fov);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	
+	//vertices
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
+	//texture data
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
-    //tests whether fragments in front of other fragments
-    glEnable(GL_DEPTH_TEST);
+	//creating textures
+	stbi_set_flip_vertically_on_load(true);
+	
+	int img_width, img_height, img_channels;
+	unsigned char* data = stbi_load("res/textures/concreteTexture.png", &img_width, &img_height, &img_channels, 0);
 
-    //MousePicker creation
-    MousePicker picker(&camera, window);
+	if (!data) {
+		std::cout << "Failed to load texture" << std::endl;
+		return -1;
+	}
 
+	unsigned int texture1;
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+
+	//texture wrapping and filtering properties
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 
-    //rendering done here
-    //-------------------
-    //Chunk testChunk(&camera, 0, 0);
-    ChunkManager chunkMgr(&camera, &picker, window);
+	glTexImage2D(
+		GL_TEXTURE_2D, 
+		0, 
+		GL_RGB, 
+		img_width, 
+		img_height, 
+		0, 
+		GL_RGB, 
+		GL_UNSIGNED_BYTE,
+		data
+	);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
 
-    //-------turns on wireframe mode
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//second texture
+	data = stbi_load("res/textures/arrow.jpg", &img_width, &img_height, &img_channels, 0);
 
-    int numCount = 1;
-    int total = 0;
-    
-    // render loop
-    // -----------
-    while (!glfwWindowShouldClose(window))
-    {
-        //calculating time logic each frame (move into camera class)
-        float currentFrame = static_cast<float>(glfwGetTime());
-        
-        camera.calc_time(currentFrame);
-        float fps = 1 / (camera.getFrameTime());
-        std::cout << "FPS: " << fps << std::endl;
+	if (!data) {
+		std::cout << "Failed to load texture" << std::endl;
+		return -1;
+	}
 
-        total += fps;
-        numCount++;
+	unsigned int texture2;
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // input
-        // -----
-        processInput(window);
-
-        // render
-        // ------
-        glClearColor(0.455f, 0.702f, 0.820f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        /*testChunk.render();
-        testChunk.setData();*/
-        
-        //updates mouse picker data
-        picker.update();
-
-        chunkMgr.Update_Loaded_Chunks();
-        chunkMgr.Render_Chunks();
-        chunkMgr.procBlockInput();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+	glTexImage2D(
+		GL_TEXTURE_2D,
+		0,
+		GL_RGB,
+		img_width,
+		img_height,
+		0,
+		GL_RGB,
+		GL_UNSIGNED_BYTE,
+		data
+	);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
-    
-    printf("Avg: %f\n", (float)total / numCount);
+	//set texture units for texture samplers
+	shader.use();
+	shader.set_uniform1i("tex_img1", 0);
+	shader.set_uniform1i("tex_img2", 1);
 
-    //test code to print max floats
-    chunkMgr.printMaxFloats();
+	while (!glfwWindowShouldClose(window)) {
+		process_input(window);
+		camera.frame_update();
 
-    //testing LRU cache
-    //LRUCache<int, int> cache(3);
-    //cache.put(123, 1);
-    //cache.put(1, 37);
-    //cache.put(4, 3);
-    //cache.get(4);
-    //std::vector<int> keys;
-    //auto iter = cache.iterator();
-    //printf("\n");
-    ////
-    //for (auto& ptr = iter.first; ptr != iter.second; ptr++) {
-    //    keys.push_back(ptr->first);
-    //}
-    ////values
-    //for (auto& iter : keys) {
-    //    printf("%d\n", *cache.get(iter));
-    //}
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		//vao and vbos store data about vertices, colors, textures, etc.
+		//shader program tells how to use data based on which program binded.
+		shader.use();
 
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::rotate(model, glm::radians(55.0f), glm::vec3(1.0f, 0.3f, 0.5f));
+		glm::mat4 view = camera.get_view_matrix();
+		//glm::perspective(fov, aspect_ratio, near, far)
+		glm::mat4 proj = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
+		shader.set_uniform_mat4("transform", proj * view * model);
 
-    glfwTerminate();
-    return 0;
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+	return 0;
 }

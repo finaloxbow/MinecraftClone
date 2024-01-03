@@ -1,52 +1,35 @@
 #pragma once
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 
-class Camera
-{
+
+class camera {
 private:
-	//camera
-	glm::vec3 cameraPos;
-	glm::vec3 cameraFront;
-	glm::vec3 cameraUp;
+	GLFWwindow* m_window;
+	unsigned int m_window_width;
+	unsigned int m_window_height;
 
-	//mouse controls
-	bool firstMouse;
-	float yaw;
-	float pitch;
-	float lastX;
-	float lastY;
-	float fov;
+	glm::vec3 m_camera_front;
+	glm::vec3 m_camera_up;
+	glm::vec3 m_camera_pos;
 
-	//time calculations
-	static float deltaTime;
-	static float lastFrame;
+	float m_delta_time;
+	float m_last_frame;
 
-	static const int SCR_HEIGHT = 1080;
-	static const int SCR_WIDTH = 1920;
+	float m_yaw;
+	float m_pitch;
+	float m_last_x;
+	float m_last_y;
+	float m_fov;
+	float m_sens;
 
 public:
+	camera(GLFWwindow* window, unsigned int window_width, unsigned int window_height);
 
-
-	Camera();
-
-	void Set_Data(float fovIn);
-	//mouse callback
-	void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-	//keyboard input
-	void keyboard_input(GLFWwindow* window);
-	//set cursor callback
-	void set_cursor_callback(GLFWwindow* window, Camera* camera);
-	//calculate time
-	void calc_time(float currentFrame);
-
-	inline float getFrameTime() { return deltaTime; }
-	inline glm::vec3 getPosition() { return cameraPos; };
-
-	//MVP matrix getters
-	glm::mat4 getPerspectiveMatrix();
-	glm::mat4 getViewMatrix();
-	glm::vec3 getCameraFront();
+	void frame_update();
+	void mouse_callback(float xpos, float ypos);
+	glm::mat4 get_view_matrix();
 };

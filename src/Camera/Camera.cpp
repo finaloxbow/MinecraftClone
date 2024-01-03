@@ -1,107 +1,89 @@
-#include "Camera.h"
+#include "camera.h"
 
-float Camera::deltaTime = 0.0f;
-float Camera::lastFrame = 0.0f;
+#include <stdexcept>
 
-Camera::Camera()
-	: cameraPos(glm::vec3(0.0f, 64.0f, 1.0f)),
-	cameraFront(glm::vec3(0.0f, -1.0f, 0.0f)),
-	cameraUp(glm::vec3(0.0f, 1.0f, 0.0f)),
-	firstMouse(true),
-	yaw(-90.0f),
-	pitch(0.0f),
-	//@TODO: change thing here
-	lastX((float)1920 / 2.0f),
-	lastY((float)1080 / 2.0f),
-    fov(0.0f)
+static bool mouse_init = false;
+
+static void static_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (camera* cam = reinterpret_cast<camera*>(glfwGetWindowUserPointer(window)))
+		cam->mouse_callback(static_cast<float>(xpos), static_cast<float>(ypos));
+	else
+		throw new std::runtime_error("glfwGetWindowUserPointer() did not return a camera ptr");
+}
+
+camera::camera(GLFWwindow* window, unsigned int window_width, unsigned int window_height)
+:	m_window(window),
+	m_window_width(window_width),
+	m_window_height(window_height),
+	m_camera_front(glm::vec3(0.0f, 0.0f, -1.0f)), 
+	m_camera_up(glm::vec3(0.0f, 1.0f, 0.0f)),
+	m_camera_pos(glm::vec3(0.0f, 0.0f, 3.0f)),
+	m_delta_time(0.0f),
+	m_last_frame(0.0f),
+	m_yaw(-90.0f),
+	m_pitch(0.0f),
+	m_last_x((float)window_width / 2.0f),
+	m_last_y((float)window_height / 2.0f),
+	m_fov(45.0f),
+	m_sens(0.1f)
 {
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	if (!glfwGetWindowUserPointer(window))
+		glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
+	else
+		throw new std::runtime_error("window user ptr has already been set");
+
+	glfwSetCursorPosCallback(window, static_mouse_callback);
 }
 
-void Camera::keyboard_input(GLFWwindow* window)
+void camera::frame_update()
 {
-    //change this to "glm::normalize(glm::vec3(cameraFront.x, 16.0f, cameraFront.z));"
-    //for true FPS camera
-    float cameraSpeed = static_cast<float>(15 * deltaTime);
-    glm::vec3 flatFront = cameraFront;
+	float current_frame = glfwGetTime();
+	m_delta_time = current_frame - m_last_frame;
+	m_last_frame = current_frame;
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * flatFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * flatFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+	//input handling
+	float camera_speed = 2.5f * m_delta_time;
+	if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
+		m_camera_pos += camera_speed * m_camera_front;
+	if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
+		m_camera_pos -= camera_speed * m_camera_front;
+	if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
+		m_camera_pos -= glm::normalize(glm::cross(m_camera_front, m_camera_up)) * camera_speed;
+	if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
+		m_camera_pos += glm::normalize(glm::cross(m_camera_front, m_camera_up)) * camera_speed;
 }
 
-void Camera::Set_Data(float fovIn)
-{
-    fov = fovIn;
+void camera::mouse_callback(float xpos, float ypos) {
+	if (!mouse_init) {
+		m_last_x = xpos;
+		m_last_y = ypos;
+		mouse_init = true;
+	}
+
+	float xoffset = xpos - m_last_x;
+	float yoffset = m_last_y - ypos;
+	m_last_x = xpos;
+	m_last_y = ypos;
+	xoffset *= m_sens;
+	yoffset *= m_sens;
+
+	m_yaw += xoffset;
+	m_pitch += yoffset;
+
+	if (m_pitch > 89.0f)
+		m_pitch = 89.0f;
+	if (m_pitch < -89.0f)
+		m_pitch = -89.0f;
+
+	glm::vec3 front(0.0f);
+	front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+	front.y = sin(glm::radians(m_pitch));
+	front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+	m_camera_front = glm::normalize(front);
 }
 
-void Camera::set_cursor_callback(GLFWwindow* window, Camera* camera)
-{
-    glfwSetWindowUserPointer(window, camera);
-    //check whether this works
-    auto func = [](GLFWwindow* w, double xposIn, double yposIn) {
-        static_cast<Camera*>(glfwGetWindowUserPointer(w))->mouse_callback(w, xposIn, yposIn);
-    };
 
-    glfwSetCursorPosCallback(window, func);
-}
-
-void Camera::calc_time(float currentFrame)
-{
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-}
-
-
-void Camera::mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    float sens = 0.1f;
-    xoffset *= sens;
-    yoffset *= sens;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-    cameraFront = glm::normalize(front);
-}
-
-glm::mat4 Camera::getPerspectiveMatrix() {
-    //change into SCR_WIDTH and SCR_HEIGHT
-    return glm::perspective(glm::radians(fov), (float)1920 / (float)1080, 0.1f, 10000.0f);
-}
-
-glm::mat4 Camera::getViewMatrix() {
-    return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-}
-
-glm::vec3 Camera::getCameraFront() {
-    return cameraFront;
+glm::mat4 camera::get_view_matrix() {
+	return glm::lookAt(m_camera_pos, m_camera_pos + m_camera_front, m_camera_up);
 }
